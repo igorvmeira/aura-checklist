@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Checklist Aura</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #0d0d0d;
+  --surface: #161616;
+  --surface2: #1f1f1f;
+  --border: #2a2a2a;
+  --gold: #c9a84c;
+  --gold2: #e8c97a;
+  --text: #f0ede8;
+  --muted: #6b6560;
+  --green: #4cae80;
+  --red: #c0504a;
+  --orange: #d4874a;
+  --radius: 10px;
+  --font-serif: 'DM Serif Display', serif;
+  --font-sans: 'DM Sans', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── HEADER ─── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+.logo {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+.logo span { color: var(--text); font-size: 0.7rem; font-family: var(--font-sans); display: block; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.5; margin-top: -2px; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.date-badge {
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* ─── SETUP / LOGIN SCREEN ─── */
+#setup-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 90vh;
+  padding: 24px;
+}
+.setup-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px 28px;
+  width: 100%;
+  max-width: 420px;
+}
+.setup-title {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.setup-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 28px; }
+.field-group { margin-bottom: 18px; }
+.field-label { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; }
+.field-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.field-input:focus { border-color: var(--gold); }
+select.field-input option { background: #222; }
+
+.btn-primary {
+  width: 100%;
+  background: var(--gold);
+  color: #0d0d0d;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  padding: 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.2s;
+}
+.btn-primary:hover { background: var(--gold2); }
+
+/* ─── MAIN APP ─── */
+#app { display: none; }
+
+/* ─── SECTOR TABS ─── */
+.sector-tabs {
+  display: flex;
+  overflow-x: auto;
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+  gap: 4px;
+}
+.sector-tabs::-webkit-scrollbar { display: none; }
+.sector-tab {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sector-tab:hover { color: var(--text); }
+.sector-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.tab-dot.done { background: var(--green); }
+.tab-dot.partial { background: var(--orange); }
+
+/* ─── CHECKLIST BODY ─── */
+.checklist-body {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 16px 100px;
+}
+
+.sector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.sector-title {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  color: var(--gold);
+}
+.sector-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+.responsible-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.responsible-field label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); display: block; margin-bottom: 4px; }
+.responsible-field input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  padding: 4px 0;
+  outline: none;
+}
+.responsible-field input:focus { border-bottom-color: var(--gold); }
+
+/* ─── TEMPERATURE BLOCK ─── */
+.temp-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.temp-block h4 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 12px; }
+.temp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.temp-item { display: flex; flex-direction: column; gap: 4px; }
+.temp-item label { font-size: 0.75rem; color: var(--muted); }
+.temp-input-row { display: flex; align-items: center; gap: 6px; }
+.temp-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  padding: 7px 10px;
+  border-radius: 6px;
+  outline: none;
+  width: 100%;
+}
+.temp-input:focus { border-color: var(--gold); }
+.temp-unit { font-size: 0.75rem; color: var(--muted); }
+
+/* ─── PHASE BLOCK ─── */
+.phase-block { margin-bottom: 24px; }
+.phase-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.phase-icon { font-size: 1rem; }
+.phase-title { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text); }
+.phase-progress { margin-left: auto; font-size: 0.75rem; color: var(--muted); }
+.phase-bar { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 14px; overflow: hidden; }
+.phase-bar-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.4s ease; }
+
+/* ─── CHECK ITEM ─── */
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+  cursor: pointer;
+  user-select: none;
+}
+.check-item:hover { border-color: #3a3a3a; }
+.check-item.checked { background: #0f1a12; border-color: #1e3a28; }
+.check-item.supervisor-checked { border-left: 3px solid var(--gold); }
+
+.check-box {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 5px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.check-item.checked .check-box {
+  background: var(--green);
+  border-color: var(--green);
+}
+.check-box::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: 2px solid white;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) scale(0);
+  transition: transform 0.15s;
+  margin-top: -2px;
+}
+.check-item.checked .check-box::after { transform: rotate(45deg) scale(1); }
+
+.check-content { flex: 1; min-width: 0; }
+.check-label { font-size: 0.88rem; line-height: 1.45; color: var(--text); }
+.check-item.checked .check-label { text-decoration: line-through; opacity: 0.5; }
+.check-desc { font-size: 0.75rem; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+.check-item.checked .check-desc { opacity: 0.4; }
+
+.check-obs-toggle {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 5px;
+  display: inline-block;
+}
+.check-obs-toggle:hover { color: var(--gold); }
+.check-obs-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  padding: 7px 10px;
+  border-radius: 6px;
+  outline: none;
+  margin-top: 8px;
+  resize: none;
+  display: none;
+}
+.check-obs-input:focus { border-color: var(--gold); }
+
+/* ─── SUPERVISOR CHECK ─── */
+.supervisor-badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  background: rgba(201,168,76,0.12);
+  border: 1px solid rgba(201,168,76,0.3);
+  padding: 2px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.supervisor-badge:hover { background: rgba(201,168,76,0.2); }
+.supervisor-badge.sv-done { background: rgba(201,168,76,0.2); color: var(--gold2); }
+
+/* ─── PRODUCTION TABLE (Bar) ─── */
+.prod-table {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.prod-table-header {
+  padding: 12px 16px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 80px;
+  gap: 10px;
+}
+.prod-row {
+  display: grid;
+  grid-template-columns: 1fr 80px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.prod-row:last-child { border-bottom: none; }
+.prod-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  padding: 5px 8px;
+  border-radius: 5px;
+  outline: none;
+  width: 100%;
+  text-align: center;
+}
+.prod-input:focus { border-color: var(--gold); }
+
+/* ─── FINALIZATION ─── */
+.finish-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-top: 24px;
+}
+.finish-block h4 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 14px; }
+.finish-time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.finish-time-item label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); display: block; margin-bottom: 4px; }
+.finish-time-val {
+  font-size: 1.1rem;
+  font-family: var(--font-serif);
+  color: var(--gold);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.obs-final {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  outline: none;
+  resize: vertical;
+  min-height: 70px;
+  margin-bottom: 16px;
+}
+.obs-final:focus { border-color: var(--gold); }
+
+.btn-finish {
+  width: 100%;
+  padding: 13px;
+  background: var(--green);
+  color: white;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: opacity 0.2s;
+}
+.btn-finish:hover { opacity: 0.85; }
+.btn-finish:disabled { opacity: 0.4; cursor: default; }
+
+/* ─── OVERVIEW PANEL ─── */
+.overview-panel {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 16px 100px;
+}
+.overview-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
+.overview-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.overview-card:hover { border-color: var(--gold); }
+.overview-card .ov-name { font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.overview-card .ov-sub { font-size: 0.7rem; color: var(--muted); }
+.ov-bar { height: 4px; background: var(--border); border-radius: 2px; margin: 10px 0 6px; overflow: hidden; }
+.ov-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+.ov-pct { font-size: 0.85rem; font-weight: 600; }
+.ov-status { font-size: 0.7rem; margin-top: 4px; }
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 300;
+}
+.nav-btn {
+  flex: 1;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.65rem;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: color 0.2s;
+  font-family: var(--font-sans);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.nav-btn.active { color: var(--gold); }
+.nav-icon { font-size: 1.1rem; }
+
+/* ─── ROLE BADGE ─── */
+.role-badge {
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.role-operador { background: rgba(255,255,255,0.08); color: var(--muted); }
+.role-supervisor { background: rgba(201,168,76,0.15); color: var(--gold); }
+.role-gestor { background: rgba(76,174,128,0.15); color: var(--green); }
+
+/* ─── LOADER ─── */
+.loader { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 0.85rem; }
+.spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.82rem;
+  padding: 10px 18px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 1000;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:480px) {
+  .overview-grid { grid-template-columns: 1fr 1fr; }
+  .responsible-row { grid-template-columns: 1fr; }
+  .finish-time-row { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-title">Aura</div>
+    <div class="setup-sub">Checklist de Abertura & Fechamento</div>
+
+    <div class="field-group">
+      <label class="field-label">Seu nome</label>
+      <input class="field-input" id="user-name" type="text" placeholder="Ex: João Carlos" autocomplete="name">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Função</label>
+      <select class="field-input" id="user-role">
+        <option value="operador">Operador (preenche checklist)</option>
+        <option value="supervisor">Supervisor (valida checklist)</option>
+        <option value="gestor">Gestor (acompanha tudo)</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="startApp()">Entrar →</button>
+    <p style="font-size:0.72rem;color:var(--muted);margin-top:14px;text-align:center">Os dados ficam salvos em tempo real no Firebase para Igor e a equipe acompanharem.</p>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="header">
+    <div>
+      <div class="logo">Aura <span>Checklist</span></div>
+    </div>
+    <div class="header-right">
+      <span class="role-badge" id="role-badge"></span>
+      <span class="date-badge" id="date-badge"></span>
+    </div>
+  </div>
+
+  <div id="view-overview" style="display:none">
+    <div class="overview-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-family:var(--font-serif);font-size:1.2rem;color:var(--text)">Visão Geral</div>
+        <div style="font-size:0.72rem;color:var(--muted)" id="overview-date"></div>
+      </div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:20px">Progresso de todos os setores hoje</div>
+      <div class="overview-grid" id="overview-grid"></div>
+    </div>
+  </div>
+
+  <div id="view-checklist" style="display:none">
+    <div class="sector-tabs" id="sector-tabs"></div>
+    <div class="checklist-body" id="checklist-body">
+      <div class="loader"><div class="spinner"></div>Carregando...</div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="nav-checklist" onclick="showView('checklist')">
+      <span class="nav-icon">✅</span>Checklist
+    </button>
+    <button class="nav-btn" id="nav-overview" onclick="showView('overview')">
+      <span class="nav-icon">📊</span>Visão Geral
+    </button>
+    <button class="nav-btn" onclick="logout()">
+      <span class="nav-icon">↩</span>Sair
+    </button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// DADOS DOS SETORES
+// ══════════════════════════════════════════════════════════
+const SETORES = {
+  cozinha: {
+    nome: 'Cozinha',
+    emoji: '🍳',
+    tempos: true,
+    temperaturas: [
+      { id: 'temp_geladeira_ini', label: 'Geladeira (inicial)', fase: 'abertura' },
+      { id: 'temp_freezer_ini',   label: 'Freezer Vertical (inicial)', fase: 'abertura' },
+      { id: 'temp_geladeira_fim', label: 'Geladeira (final)', fase: 'fechamento' },
+      { id: 'temp_freezer_fim',   label: 'Freezer Vertical (final)', fase: 'fechamento' },
+    ],
+    abertura: [
+      { id: 'coz_a1', label: 'Verificar temperatura dos freezers', desc: 'Anotar leituras no campo de temperatura acima. Ideal: geladeira 1–4°C, freezer -18°C ou abaixo.' },
+      { id: 'coz_a2', label: 'Conferir plano de ataque', desc: 'Revisar ficha de produções prioritárias do dia antes de iniciar qualquer preparo.' },
+      { id: 'coz_a3', label: 'Higiene pessoal e EPI', desc: 'Cabelo aparado/preso, unhas curtas e sem esmalte, touca descartável, sapato antiderrapante, uniforme completo.' },
+      { id: 'coz_a4', label: 'Conferir uniformes da equipe', desc: 'Blusa do uniforme, calça escura, touca descartável, sapato antiderrapante. Ninguém entra na cozinha sem EPI.' },
+      { id: 'coz_a5', label: 'Produzir itens de prioridade', desc: 'Iniciar pela ficha de mise en place: molhos, bases e produções com maior tempo de preparo primeiro.' },
+      { id: 'coz_a6', label: 'Verificar e limpar broiler e fritadeira', desc: 'Broiler: limpar grelha e coletor de gordura. Fritadeira: verificar nível e qualidade do óleo (trocar se escuro ou com odor).' },
+      { id: 'coz_a7', label: 'Balcão limpo e sanitizado com álcool', desc: 'Passar álcool 70% em todas as superfícies de manipulação antes de iniciar produção.' },
+      { id: 'coz_a8', label: 'Conferir molhos, acompanhamentos e insumos', desc: 'Verificar quantidade e validade. Itens abaixo do mínimo entram na lista de compras.' },
+      { id: 'coz_a9', label: 'Retirar porções para descongelar', desc: 'Carne de sol, chorizo, picanha, linguiça, purê de mandioca, salmão, ceviche — transferir para geladeira (nunca em temperatura ambiente).' },
+      { id: 'coz_a10', label: 'Retirar e empanar frituras', desc: 'Croquete, pão de queijo, coxinha e queijo coalho — empanar e reservar em bandeja tampada na geladeira.' },
+      { id: 'coz_a11', label: 'Montar praça', desc: 'Tudo no lugar antes da abertura: pratos, tábuas, utensílios e descartáveis posicionados por estação.' },
+      { id: 'coz_a12', label: 'Ligar equipamentos', desc: 'Gás, broiler, fritadeira e exaustor. Confirmar que exaustor está funcionando antes de ligar o fogo.' },
+      { id: 'coz_a13', label: 'Comandeira ligada e testada', desc: 'Enviar um pedido de teste para confirmar que a impressão está funcionando.' },
+    ],
+    fechamento: [
+      { id: 'coz_f1', label: 'Guardar molhos e acompanhamentos', desc: 'Em recipientes tampados, identificados e nos lugares pré-definidos da geladeira. Nunca sobrepor sem identificação.' },
+      { id: 'coz_f2', label: 'Desligar e limpar broiler, fogão e fritadeira', desc: 'Esfriar antes de limpar. Broiler: remover grelha e lavar. Fritadeira: filtrar ou trocar óleo conforme necessidade.' },
+      { id: 'coz_f3', label: 'Lavar bancada e balcão com bucha', desc: 'Esfregar bem com detergente, enxaguar e finalizar com álcool 70%.' },
+      { id: 'coz_f4', label: 'Lavar chão e cantos da parede', desc: 'Varrer resíduos, lavar com água e detergente, puxar com rodo. Focar nos cantos e embaixo das bancadas.' },
+      { id: 'coz_f5', label: 'Lavar facas', desc: 'Lavar individualmente, nunca jogar no tanque junto com outros utensílios. Guardar no suporte correto.' },
+      { id: 'coz_f6', label: 'Lavar panos de prato', desc: 'Lavar e estender para secar. Panos sujos não voltam para o dia seguinte.' },
+      { id: 'coz_f7', label: 'Recolher o lixo', desc: 'Retirar saco de lixo, amarrar e levar para o destino correto. Colocar saco novo na lixeira.' },
+      { id: 'coz_f8', label: 'Lavar a lixeira', desc: 'Enxaguar e higienizar a lixeira por dentro e por fora com água e desinfetante.' },
+      { id: 'coz_f9', label: 'Alimentar a PA (Planilha de Acompanhamento)', desc: 'Registrar producções do dia, quebras e consumos internos na planilha.' },
+      { id: 'coz_f10', label: 'Enviar documentos de controle no grupo', desc: 'Foto do checklist preenchido, quebras e lista de compras enviados no grupo da gestão.' },
+      { id: 'coz_f11', label: 'Enviar quebras', desc: 'Registrar todo item quebrado, com quantidade e motivo.' },
+      { id: 'coz_f12', label: 'Enviar lista de compras', desc: 'Itens abaixo do estoque mínimo. Incluir quantidade necessária e urgência.' },
+    ],
+  },
+
+  pizzaria: {
+    nome: 'Pizzaria',
+    emoji: '🍕',
+    tempos: true,
+    temperaturas: [
+      { id: 'piz_temp_ini', label: 'Freezer Pizzaria (inicial)', fase: 'abertura' },
+      { id: 'piz_temp_fim', label: 'Freezer Pizzaria (final)', fase: 'fechamento' },
+    ],
+    abertura: [
+      { id: 'piz_a1', label: 'Verificar temperatura dos freezers', desc: 'Anotar leitura. Ideal: -18°C ou abaixo. Se estiver acima de -15°C, chamar gestor imediatamente.' },
+      { id: 'piz_a2', label: 'Conferir plano de ataque', desc: 'Revisar ficha de produções prioritárias: massas a descongelar, produções do dia.' },
+      { id: 'piz_a3', label: 'Higiene pessoal e EPI', desc: 'Cabelo preso, unhas curtas e sem esmalte, touca descartável, sapato antiderrapante, uniforme completo.' },
+      { id: 'piz_a4', label: 'Conferir uniformes da equipe', desc: 'Blusa do uniforme, calça escura, touca descartável, sapato antiderrapante obrigatório.' },
+      { id: 'piz_a5', label: 'Produzir itens de prioridade', desc: 'Iniciar pelas produções com maior tempo: massas, fermentação, coberturas que precisam de preparo.' },
+      { id: 'piz_a6', label: 'Verificar e limpar forno', desc: 'Pedra refratária: limpar com raspadeira. Verificar temperatura de operação. Ligar com antecedência mínima de 30 min.' },
+      { id: 'piz_a7', label: 'Balcão limpo e sanitizado com álcool', desc: 'Todas as superfícies de manipulação com álcool 70% antes de iniciar produção.' },
+      { id: 'piz_a8', label: 'Conferir molhos (pomodoro e branco)', desc: 'Quantidade suficiente para o serviço? Se precisar produzir, iniciar agora.' },
+      { id: 'piz_a9', label: 'Conferir hortifruti', desc: 'Rúcula, manjericão, cebola, pimentão, tomate seco — frescos e em quantidade. Descartar o que estiver murcho ou com aspecto ruim.' },
+      { id: 'piz_a10', label: 'Conferir e retirar massas', desc: 'Retirar da câmara/freezer para descongelar conforme planejamento do dia. Identificar com data e hora.' },
+      { id: 'piz_a11', label: 'Conferir insumos (proteínas e queijos)', desc: 'Frango, carne seca, presunto, parma, lombinho, muçarela, muçarela de búfala, parmesão, gorgonzola, provolone, abacaxi ao bourbon, cebola caramelizada.' },
+      { id: 'piz_a12', label: 'Montar praça e utensílios', desc: 'Talheres, tesoura, faca, pegadores e microplane posicionados e limpos.' },
+      { id: 'piz_a13', label: 'Ligar forno', desc: 'Ligar com antecedência. Confirmar temperatura de operação antes de abrir para serviço.' },
+      { id: 'piz_a14', label: 'Comandeira ligada e testada', desc: 'Enviar pedido de teste antes da abertura.' },
+      { id: 'piz_a15', label: 'Tábuas, pás e utensílios limpos e posicionados', desc: 'Tudo higienizado e no lugar correto da praça.' },
+    ],
+    fechamento: [
+      { id: 'piz_f1', label: 'Guardar insumos, molhos e acompanhamentos', desc: 'Em recipientes tampados, identificados com data, nos lugares pré-definidos.' },
+      { id: 'piz_f2', label: 'Produzir polish', desc: 'Preparar massa para o dia seguinte conforme protocolo (se aplicável).' },
+      { id: 'piz_f3', label: 'Desligar e limpar forno', desc: 'Aguardar esfriar. Limpar pedra com raspadeira. Nunca usar água com pedra quente.' },
+      { id: 'piz_f4', label: 'Lavar masseira', desc: 'Higienizar completamente. Remover resíduos de massa de todas as partes.' },
+      { id: 'piz_f5', label: 'Lavar bancada e balcão com bucha', desc: 'Detergente + água + álcool 70% para finalizar.' },
+      { id: 'piz_f6', label: 'Lavar chão e cantos da parede', desc: 'Varrer, lavar, rodo. Focar em cantos e embaixo dos equipamentos.' },
+      { id: 'piz_f7', label: 'Lavar facas', desc: 'Individualmente, guardar no suporte correto após secar.' },
+      { id: 'piz_f8', label: 'Recolher o lixo', desc: 'Retirar saco, amarrar, levar ao destino. Colocar saco novo.' },
+      { id: 'piz_f9', label: 'Lavar a lixeira', desc: 'Lavar por dentro e por fora com desinfetante.' },
+      { id: 'piz_f10', label: 'Alimentar a PA', desc: 'Registrar produções e consumos do dia.' },
+      { id: 'piz_f11', label: 'Enviar documentos de controle no grupo', desc: 'Checklist, quebras e lista de compras no grupo da gestão.' },
+      { id: 'piz_f12', label: 'Enviar quebras', desc: 'Item, quantidade e motivo de cada quebra.' },
+      { id: 'piz_f13', label: 'Enviar lista de compras', desc: 'Itens abaixo do mínimo com urgência indicada.' },
+    ],
+  },
+
+  bar: {
+    nome: 'Bar',
+    emoji: '🍸',
+    tempos: true,
+    producoes: {
+      titulo: 'Guarnições & Produções',
+      itens: [
+        { grupo: 'Guarnições', lista: ['Angostura','Alecrim','Bala de Gengibre','Bala de Palha','Canela em Pau','Capim Santo','Cereja','Funcho','Gelo Frapê','Hortelã','Nibs Cacau','Palito Bambu','Laranja Bahia','Limão Siciliano','Limão Taiti','Tomilho'] },
+        { grupo: 'Cordiais', lista: ['Morango','Frutas Vermelhas','Verjus'] },
+        { grupo: 'Xaropes', lista: ['Simples'] },
+        { grupo: 'Pré-Batch', lista: ['Fitzgerald'] },
+        { grupo: 'Espumas', lista: ['Coco','Gengibre','Maracujá','Limão Siciliano'] },
+        { grupo: 'Carbonatados', lista: ['Água c/ Gás','Maçã Verde','Morango','Tangerina'] },
+      ],
+    },
+    abertura: [
+      { id: 'bar_a1', label: 'Abastecer canudos e descartáveis', desc: 'Canudos, guardanapos, palitos e demais descartáveis nos dispensers e organizadores da praça.' },
+      { id: 'bar_a2', label: 'Abastecer coolers de gelo', desc: 'Gelo suficiente para o início do serviço. Verificar temperatura dos coolers.' },
+      { id: 'bar_a3', label: 'Balcão limpo e sanitizado com álcool', desc: 'Álcool 70% em toda a superfície do balcão e área de trabalho.' },
+      { id: 'bar_a4', label: 'Conferir destilados, xaropes e cordiais', desc: 'Verificar nível de cada garrafa. Reposições necessárias já deixar separadas.' },
+      { id: 'bar_a5', label: 'Praças de drinks e sucos posicionadas', desc: 'Cada praça montada com o que precisa: shakers, dosadores, colheres, copos, tampas.' },
+      { id: 'bar_a6', label: 'Comandeira ligada e testada', desc: 'Enviar pedido de teste antes da abertura.' },
+      { id: 'bar_a7', label: 'Copos posicionados', desc: 'Copos de cada categoria no lugar correto da praça, limpos e secos.' },
+      { id: 'bar_a8', label: 'Equipe uniformizada', desc: 'Todos com uniforme completo e apresentação pessoal adequada antes da abertura.' },
+      { id: 'bar_a9', label: 'Guarnições posicionadas', desc: 'Todas as guarnições do dia preparadas e no lugar da praça.' },
+      { id: 'bar_a10', label: 'CO2 ligado', desc: 'Verificar pressão do cilindro. Registrar leitura do manômetro.' },
+      { id: 'bar_a11', label: 'Conferir pressão dos carbonatados', desc: 'Cada linha de carbonatado na pressão correta. Testar um de cada antes de abrir.' },
+    ],
+    fechamento: [
+      { id: 'bar_f1', label: 'Repor destilados e copos', desc: 'Deixar estoque reposto para o próximo serviço.' },
+      { id: 'bar_f2', label: 'Repor cervejas e soft drinks', desc: 'Geladeiras abastecidas e organizadas por tipo.' },
+      { id: 'bar_f3', label: 'Embalar hortifruti', desc: 'Frutas e ervas em embalagem fechada, identificada e na geladeira.' },
+      { id: 'bar_f4', label: 'Lavar chão do bar e cantos da parede', desc: 'Varrer, lavar com água e detergente, rodo. Atenção aos cantos.' },
+      { id: 'bar_f5', label: 'Lavar barmats e utensílios', desc: 'Lavar todos os barmats, shakers, dosadores e utensílios usados.' },
+      { id: 'bar_f6', label: 'Conferir etiquetas', desc: 'Verificar etiquetas de validade em todos os preparos (cordiais, espumas, xaropes). Descartar vencidos.' },
+      { id: 'bar_f7', label: 'Limpar porta das geladeiras', desc: 'Limpar por dentro e por fora, verificar vedação.' },
+      { id: 'bar_f8', label: 'Descartar gelo', desc: 'Todo gelo remanescente nos coolers deve ser descartado. Não reutilizar gelo de um serviço para o outro.' },
+      { id: 'bar_f9', label: 'Colocar gás nos RTDs', desc: 'Recarregar carbonatação das garrafas RTD conforme protocolo.' },
+      { id: 'bar_f10', label: 'Conferir garrafas RTD lavadas e com álcool 70%', desc: 'Todas as garrafas de RTD limpas, com álcool 70% dentro e tampadas.' },
+      { id: 'bar_f11', label: 'CO2 desligado', desc: 'Fechar o cilindro e desligar o regulador.' },
+      { id: 'bar_f12', label: 'Enviar documentos de controle no grupo', desc: 'Checklist preenchido e foto enviada no grupo da gestão.' },
+      { id: 'bar_f13', label: 'Lavar bancada e balcão com bucha', desc: 'Detergente, enxágue e álcool 70% para finalizar.' },
+    ],
+  },
+
+  barback: {
+    nome: 'Bar Back',
+    emoji: '🧊',
+    tempos: true,
+    producoes: {
+      titulo: 'Guarnições & Produções (Bar Back)',
+      itens: [
+        { grupo: 'Guarnições', lista: ['Laranja','Limão','Morango','Abacaxi'] },
+        { grupo: 'Sucos', lista: ['Suco de Laranja','Limão Espremido'] },
+      ],
+    },
+    abertura: [
+      { id: 'bb_a1', label: 'Abastecer canudos e descartáveis', desc: 'Canudos, guardanapos e descartáveis nos organizadores corretos.' },
+      { id: 'bb_a2', label: 'Abastecer coolers de gelo', desc: 'Carregar gelo nos coolers antes da abertura.' },
+      { id: 'bb_a3', label: 'Verificar temperatura dos freezers', desc: 'Anotar leituras. Geladeira: 1–4°C. Freezer: -18°C ou abaixo.' },
+      { id: 'bb_a4', label: 'Verificar baldes e limpar', desc: 'Baldes de gelo limpos, sem resíduos ou odor.' },
+      { id: 'bb_a5', label: 'Balcão limpo e sanitizado com álcool', desc: 'Álcool 70% em toda a área de trabalho.' },
+      { id: 'bb_a6', label: 'Conferir vinhos e cervejas especiais', desc: 'Verificar estoque, temperatura e organização.' },
+      { id: 'bb_a7', label: 'Preparar suco de laranja', desc: 'Quantidade conforme previsão do dia.' },
+      { id: 'bb_a8', label: 'Espremer uma garrafa de limão', desc: 'Limão espremido e reservado em recipiente tampado na geladeira.' },
+      { id: 'bb_a9', label: 'Cortar limões', desc: 'Cortar e reservar em recipiente tampado para o serviço.' },
+      { id: 'bb_a10', label: 'Buscar destilados no estoque', desc: 'Separar o que vai para a praça do bar conforme lista de mise en place.' },
+      { id: 'bb_a11', label: 'Comandeira ligada', desc: 'Verificar funcionamento antes da abertura.' },
+      { id: 'bb_a12', label: 'Copos posicionados', desc: 'Copos limpos e organizados por tipo na posição correta.' },
+      { id: 'bb_a13', label: 'Equipe uniformizada', desc: 'Todos com uniforme completo antes da abertura.' },
+    ],
+    fechamento: [
+      { id: 'bb_f1', label: 'Guardar destilados não vendidos', desc: 'Retornar para o estoque, registrando o que foi devolvido.' },
+      { id: 'bb_f2', label: 'Repor cervejas', desc: 'Deixar geladeira abastecida para o próximo serviço.' },
+      { id: 'bb_f3', label: 'Embalar frutas sobradas', desc: 'Frutas em embalagem fechada, identificadas com data, na geladeira.' },
+      { id: 'bb_f4', label: 'Repor refrigerantes, energéticos e águas', desc: 'Geladeiras abastecidas e organizadas.' },
+      { id: 'bb_f5', label: 'Lavar chão do bar e cantos da parede', desc: 'Varrer, lavar, rodo. Focar nos cantos.' },
+      { id: 'bb_f6', label: 'Lavar tábuas e utensílios', desc: 'Lavar individualmente. Guardar limpos e secos.' },
+      { id: 'bb_f7', label: 'Limpar porta das geladeiras', desc: 'Limpeza interna e externa, verificar vedação.' },
+      { id: 'bb_f8', label: 'Descartar gelo', desc: 'Todo gelo dos coolers deve ser descartado. Nunca reutilizar.' },
+      { id: 'bb_f9', label: 'Lavar baldes utilizados', desc: 'Lavar e secar todos os baldes de gelo.' },
+      { id: 'bb_f10', label: 'Enviar documentos de controle no grupo', desc: 'Checklist e foto enviados no grupo da gestão.' },
+      { id: 'bb_f11', label: 'Lavar bancada e balcão com bucha', desc: 'Detergente + enxágue + álcool 70%.' },
+    ],
+  },
+
+  salao: {
+    nome: 'Salão',
+    emoji: '🏮',
+    tempos: true,
+    abertura: [
+      { id: 'sal_a1', label: 'Consultar reservas no Trello e organizar mesas', desc: 'Verificar reservas do dia e configurar mesas no salão e mezanino conforme demanda. Mesa de evento separada antecipadamente.' },
+      { id: 'sal_a2', label: 'Retirar capas e lonas do som', desc: 'Remover proteções dos equipamentos de som com cuidado.' },
+      { id: 'sal_a3', label: 'Ligar mesa de som e caixas', desc: 'Testar volumes antes da abertura. Música ambiente para o início.' },
+      { id: 'sal_a4', label: 'Montar o lounge', desc: 'Pufes, almofadas e mobiliário do lounge no lugar correto e limpos.' },
+      { id: 'sal_a5', label: 'Em dias de chuva: toldos e ombrelones', desc: 'Abrir toldos e ombrelones. Verificar se há água acumulada e puxar antes da abertura.' },
+      { id: 'sal_a6', label: 'Ligar ar do banheiro feminino', desc: 'Verificar funcionamento. Banheiro limpo antes da abertura.' },
+      { id: 'sal_a7', label: 'Ligar todas as luzes', desc: 'Arco de entrada, mezanino e palco. Verificar lâmpadas queimadas e reportar.' },
+      { id: 'sal_a8', label: 'Retirar as grades', desc: 'Remover grades da entrada e posicionar no local correto.' },
+      { id: 'sal_a9', label: 'Colocar porta-guardanapos nas mesas', desc: 'Açúcar, sal, adoçante e palitos em todas as mesas. Verificar que estão cheios.' },
+      { id: 'sal_a10', label: 'Limpar mesas', desc: 'Superfície limpa, sem manchas, cadeiras posicionadas corretamente.' },
+      { id: 'sal_a11', label: 'Verificar itens fora de lugar no salão', desc: 'Remover pés de ombrelone, rodos, vassouras e cones do campo visual dos clientes.' },
+      { id: 'sal_a12', label: 'Todos uniformizados no horário de abertura', desc: 'Equipe pronta e posicionada antes de abrir as portas.' },
+      { id: 'sal_a13', label: 'Passar informações para freelancers', desc: 'Briefing de posicionamento, reservas e orientações do dia para os freelancers antes de abrir.' },
+    ],
+    fechamento: [
+      { id: 'sal_f1', label: 'Recolher taças, copos e pratos das mesas', desc: 'Verificar todas as mesas, mezanino, lounge e área externa.' },
+      { id: 'sal_f2', label: 'Recolher porta-guardanapos e guardar no aparador', desc: 'Todos os porta-guardanapos, saleiros e açucareiros recolhidos.' },
+      { id: 'sal_f3', label: 'Guardar mesas e cadeiras no local adequado', desc: 'Mesas dobradas e cadeiras empilhadas conforme organização padrão.' },
+      { id: 'sal_f4', label: 'Desligar e cobrir as caixas de som', desc: 'Desligar mesa de som, amplificadores e colocar capas protetoras.' },
+      { id: 'sal_f5', label: 'Desligar ar do banheiro feminino', desc: 'Verificar se banheiros estão limpos antes de fechar.' },
+      { id: 'sal_f6', label: 'Recolher ombrelones', desc: 'Fechar, amarrar e guardar nos locais corretos. Verificar cones.' },
+      { id: 'sal_f7', label: 'Entregar máquinas no caixa', desc: 'Todas as maquininhas entregues ao responsável pelo caixa com conferência.' },
+      { id: 'sal_f8', label: 'Colocar as grades', desc: 'Instalar grades de proteção nas entradas.' },
+      { id: 'sal_f9', label: 'Desligar as luzes', desc: 'Todas as luzes do salão, mezanino, palco e área externa.' },
+      { id: 'sal_f10', label: 'Dobrar mesas, cadeiras e cobrir', desc: 'Cobrir mobiliário para proteção.' },
+      { id: 'sal_f11', label: 'Trancar portas e grades', desc: 'Verificar todas as entradas. Sem exceção.' },
+      { id: 'sal_f12', label: 'Ativar alarme', desc: 'Ativar o sistema de alarme somente após confirmar que todos saíram do local.' },
+    ],
+  },
+
+  lavacao: {
+    nome: 'Lavação',
+    emoji: '🧼',
+    tempos: true,
+    quebras: true,
+    abertura: [
+      { id: 'lav_a1', label: 'Conferir itens de trabalho', desc: 'Flanela, sacos de lixo, detergente, rodo, vassoura e luva — tudo presente e em condições de uso.' },
+      { id: 'lav_a2', label: 'Limpar prateleira de apoio e repor copos, pratos e talheres', desc: 'Prateleiras limpas, material organizado e em quantidade suficiente para o serviço.' },
+      { id: 'lav_a3', label: 'Repor copos do bar', desc: 'Levar copos limpos para a posição correta do bar antes da abertura.' },
+      { id: 'lav_a4', label: 'Guardar pratos, panelas e utensílios na cozinha', desc: 'Tudo do serviço anterior limpo, seco e guardado no lugar correto.' },
+      { id: 'lav_a5', label: 'Embalar talheres', desc: 'Garfo + faca em guardanapo de papel, quantidade conforme previsão de mesas.' },
+    ],
+    fechamento: [
+      { id: 'lav_f1', label: 'Recolher jantar e limpar refeitório', desc: 'Recolher tudo da refeição da equipe, limpar mesa e superfícies.' },
+      { id: 'lav_f2', label: 'Guardar pratos, panelas e utensílios na cozinha', desc: 'Todos lavados, secos e no lugar correto.' },
+      { id: 'lav_f3', label: 'Lavar escorredor e bancadas', desc: 'Escorredor limpo sem acúmulo. Bancadas lavadas e sanitizadas.' },
+      { id: 'lav_f4', label: 'Lavar banheiro', desc: 'Vaso, pia, chão e espelho. Repor papel e sabonete.' },
+      { id: 'lav_f5', label: 'Recolher lixo', desc: 'Todos os pontos de lixo do estabelecimento. Saco novo em todas as lixeiras.' },
+      { id: 'lav_f6', label: 'Lavar a lixeira', desc: 'Por dentro e por fora com desinfetante.' },
+      { id: 'lav_f7', label: 'Lavar chão e cantos da parede da lavação', desc: 'Varrer, lavar com pressão, rodo. Focar nos cantos com acúmulo de resíduo.' },
+      { id: 'lav_f8', label: 'Desligar ventilador', desc: 'Desligar e, se necessário, limpar as hélices.' },
+      { id: 'lav_f9', label: 'Enviar documentos de controle no grupo', desc: 'Checklist e foto enviados no grupo da gestão.' },
+      { id: 'lav_f10', label: 'Enviar quebras', desc: 'Pratos, copos, utensílios quebrados — item por item com quantidade.' },
+      { id: 'lav_f11', label: 'Enviar lista de compras', desc: 'Itens abaixo do mínimo com urgência indicada.' },
+    ],
+  },
+};
+
+// ══════════════════════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════════════════════
+let db = null;
+let USER = { name: '', role: '', sector: null };
+let currentSector = 'cozinha';
+let currentView = 'checklist';
+let today = getTodayStr();
+let liveData = {};
+let unsubscribeFns = [];
+
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function getTimeStr() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function formatDateBR(str) {
+  const [y,m,d] = str.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// ══════════════════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey: "AIzaSyC_iSwdMGUVC-_Yedl9dF_DhBnN-ihKF9w",
+  databaseURL: "https://aura-checklist-default-rtdb.firebaseio.com",
+  projectId: "aura-checklist",
+};
+
+function startApp() {
+  const name = document.getElementById('user-name').value.trim();
+  const role = document.getElementById('user-role').value;
+  if (!name) { showToast('Digite seu nome'); return; }
+  USER.name = name;
+  USER.role = role;
+  localStorage.setItem('aura_user', JSON.stringify({ name, role }));
+  initFirebase();
+}
+
+function initFirebase() {
+  try {
+    if (firebase.apps.length === 0) {
+      firebase.initializeApp({
+        apiKey: FB_CONFIG.apiKey,
+        databaseURL: FB_CONFIG.databaseURL,
+        projectId: FB_CONFIG.projectId,
+      });
+    }
+    db = firebase.database();
+    launchApp();
+  } catch(e) {
+    showToast('Erro ao conectar Firebase: ' + e.message);
+  }
+}
+
+function launchApp() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  const roleLbl = { operador: 'Operador', supervisor: 'Supervisor', gestor: 'Gestor' };
+  const badge = document.getElementById('role-badge');
+  badge.textContent = `${USER.name} · ${roleLbl[USER.role]}`;
+  badge.className = `role-badge role-${USER.role}`;
+
+  document.getElementById('date-badge').textContent = formatDateBR(today);
+  document.getElementById('overview-date').textContent = formatDateBR(today);
+
+  subscribeAll();
+  renderSectorTabs();
+  showView('checklist');
+  switchSector('cozinha');
+}
+
+// ══════════════════════════════════════════════════════════
+// FIREBASE SUBSCRIPTION
+// ══════════════════════════════════════════════════════════
+function subscribeAll() {
+  const ref = db.ref(`checklist/${today}`);
+  ref.on('value', snap => {
+    liveData = snap.val() || {};
+    refreshUI();
+  });
+}
+
+function getRef(path) { return db.ref(`checklist/${today}/${path}`); }
+
+// ══════════════════════════════════════════════════════════
+// VIEW
+// ══════════════════════════════════════════════════════════
+function showView(view) {
+  currentView = view;
+  document.getElementById('view-checklist').style.display = view === 'checklist' ? 'block' : 'none';
+  document.getElementById('view-overview').style.display = view === 'overview' ? 'block' : 'none';
+  document.getElementById('nav-checklist').classList.toggle('active', view === 'checklist');
+  document.getElementById('nav-overview').classList.toggle('active', view === 'overview');
+  if (view === 'overview') renderOverview();
+}
+
+// ══════════════════════════════════════════════════════════
+// SECTOR TABS
+// ══════════════════════════════════════════════════════════
+function renderSectorTabs() {
+  const tabs = document.getElementById('sector-tabs');
+  tabs.innerHTML = Object.entries(SETORES).map(([key, s]) => `
+    <div class="sector-tab ${key === currentSector ? 'active' : ''}" id="tab-${key}" onclick="switchSector('${key}')">
+      <span>${s.emoji}</span>${s.nome}
+      <span class="tab-dot" id="dot-${key}"></span>
+    </div>
+  `).join('');
+}
+
+function updateTabDots() {
+  Object.entries(SETORES).forEach(([key, s]) => {
+    const dot = document.getElementById(`dot-${key}`);
+    if (!dot) return;
+    const pct = calcProgress(key);
+    dot.className = 'tab-dot' + (pct === 100 ? ' done' : pct > 0 ? ' partial' : '');
+  });
+}
+
+function switchSector(key) {
+  currentSector = key;
+  document.querySelectorAll('.sector-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById(`tab-${key}`);
+  if (tab) { tab.classList.add('active'); tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }
+  renderChecklist();
+}
+
+// ══════════════════════════════════════════════════════════
+// PROGRESS
+// ══════════════════════════════════════════════════════════
+function calcProgress(sectorKey) {
+  const s = SETORES[sectorKey];
+  const sd = liveData[sectorKey] || {};
+  const all = [...s.abertura, ...s.fechamento];
+  if (!all.length) return 0;
+  const done = all.filter(item => sd.checks && sd.checks[item.id]?.done).length;
+  return Math.round((done / all.length) * 100);
+}
+
+function calcPhaseProgress(sectorKey, phase) {
+  const s = SETORES[sectorKey];
+  const sd = liveData[sectorKey] || {};
+  const items = phase === 'abertura' ? s.abertura : s.fechamento;
+  if (!items.length) return { done: 0, total: 0 };
+  const done = items.filter(item => sd.checks && sd.checks[item.id]?.done).length;
+  return { done, total: items.length };
+}
+
+// ══════════════════════════════════════════════════════════
+// RENDER CHECKLIST
+// ══════════════════════════════════════════════════════════
+function renderChecklist() {
+  const s = SETORES[currentSector];
+  const sd = liveData[currentSector] || {};
+  const checks = sd.checks || {};
+  const isSupervisor = USER.role === 'supervisor' || USER.role === 'gestor';
+
+  let html = `
+    <div class="sector-header">
+      <div>
+        <div class="sector-title">${s.emoji} ${s.nome}</div>
+        <div class="sector-meta">${formatDateBR(today)}</div>
+      </div>
+    </div>
+
+    <div class="responsible-row">
+      <div class="responsible-field">
+        <label>Responsável</label>
+        <input type="text" value="${sd.responsavel || ''}" placeholder="Nome do responsável" onchange="saveField('${currentSector}/responsavel', this.value)">
+      </div>
+      <div class="responsible-field">
+        <label>Horário de início</label>
+        <input type="text" value="${sd.horario_inicio || ''}" placeholder="HH:MM" onchange="saveField('${currentSector}/horario_inicio', this.value)">
+      </div>
+    </div>
+  `;
+
+  // Temperaturas
+  if (s.temperaturas) {
+    const temps_ab = s.temperaturas.filter(t => t.fase === 'abertura');
+    const temps_fe = s.temperaturas.filter(t => t.fase === 'fechamento');
+    if (temps_ab.length) {
+      html += `<div class="temp-block"><h4>🌡️ Temperatura — Abertura</h4><div class="temp-grid">`;
+      temps_ab.forEach(t => {
+        html += `<div class="temp-item"><label>${t.label}</label><div class="temp-input-row"><input class="temp-input" type="number" step="0.1" value="${(sd.temperaturas && sd.temperaturas[t.id]) || ''}" placeholder="—" onchange="saveField('${currentSector}/temperaturas/${t.id}', this.value)"><span class="temp-unit">°C</span></div></div>`;
+      });
+      html += `</div></div>`;
+    }
+  }
+
+  // Produções (bar / barback)
+  if (s.producoes) {
+    html += `<div class="prod-table"><div class="prod-table-header"><span>${s.producoes.titulo}</span><span style="text-align:center">Qtd.</span></div>`;
+    s.producoes.itens.forEach(grupo => {
+      html += `<div class="prod-row" style="background:var(--surface2);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)"><span>${grupo.grupo}</span><span></span></div>`;
+      grupo.lista.forEach(item => {
+        const fieldKey = 'prod_' + item.toLowerCase().replace(/[^a-z0-9]/g,'_');
+        html += `<div class="prod-row"><span>${item}</span><input class="prod-input" type="text" value="${(sd.producoes && sd.producoes[fieldKey]) || ''}" placeholder="—" onchange="saveField('${currentSector}/producoes/${fieldKey}', this.value)" onclick="event.stopPropagation()"></div>`;
+      });
+    });
+    html += `</div>`;
+  }
+
+  // Quebras (lavação)
+  if (s.quebras) {
+    html += `
+      <div class="temp-block">
+        <h4>🔴 Quebras do Dia</h4>
+        <div class="temp-grid">
+          <div class="temp-item"><label>Pratos/Utensílios</label><input class="temp-input" type="text" value="${(sd.quebras && sd.quebras.pratos) || ''}" placeholder="Ex: 2 pratos rasos" onchange="saveField('${currentSector}/quebras/pratos', this.value)"></div>
+          <div class="temp-item"><label>Copos</label><input class="temp-input" type="text" value="${(sd.quebras && sd.quebras.copos) || ''}" placeholder="Ex: 1 taça vinho" onchange="saveField('${currentSector}/quebras/copos', this.value)"></div>
+        </div>
+      </div>`;
+  }
+
+  // ABERTURA
+  const abProg = calcPhaseProgress(currentSector, 'abertura');
+  const abPct = abProg.total ? Math.round((abProg.done/abProg.total)*100) : 0;
+  html += `
+    <div class="phase-block">
+      <div class="phase-header">
+        <span class="phase-icon">🌅</span>
+        <span class="phase-title">Abertura</span>
+        <span class="phase-progress">${abProg.done}/${abProg.total}</span>
+      </div>
+      <div class="phase-bar"><div class="phase-bar-fill" style="width:${abPct}%"></div></div>`;
+
+  s.abertura.forEach(item => {
+    const c = checks[item.id] || {};
+    html += renderItem(item, c, isSupervisor);
+  });
+  html += `</div>`;
+
+  // Temperaturas fechamento
+  if (s.temperaturas) {
+    const temps_fe = s.temperaturas.filter(t => t.fase === 'fechamento');
+    if (temps_fe.length) {
+      html += `<div class="temp-block"><h4>🌡️ Temperatura — Fechamento</h4><div class="temp-grid">`;
+      temps_fe.forEach(t => {
+        html += `<div class="temp-item"><label>${t.label}</label><div class="temp-input-row"><input class="temp-input" type="number" step="0.1" value="${(sd.temperaturas && sd.temperaturas[t.id]) || ''}" placeholder="—" onchange="saveField('${currentSector}/temperaturas/${t.id}', this.value)"><span class="temp-unit">°C</span></div></div>`;
+      });
+      html += `</div></div>`;
+    }
+  }
+
+  // FECHAMENTO
+  const feProg = calcPhaseProgress(currentSector, 'fechamento');
+  const fePct = feProg.total ? Math.round((feProg.done/feProg.total)*100) : 0;
+  html += `
+    <div class="phase-block">
+      <div class="phase-header">
+        <span class="phase-icon">🌙</span>
+        <span class="phase-title">Fechamento</span>
+        <span class="phase-progress">${feProg.done}/${feProg.total}</span>
+      </div>
+      <div class="phase-bar"><div class="phase-bar-fill" style="width:${fePct}%;background:#5b9cf6"></div></div>`;
+
+  s.fechamento.forEach(item => {
+    const c = checks[item.id] || {};
+    html += renderItem(item, c, isSupervisor);
+  });
+  html += `</div>`;
+
+  // Finalização
+  html += `
+    <div class="finish-block">
+      <h4>Finalização do Setor</h4>
+      <div class="finish-time-row">
+        <div class="finish-time-item">
+          <label>Abertura finalizada às</label>
+          <div class="finish-time-val">${sd.horario_abertura_fim || '—'}</div>
+          <button onclick="markFinishTime('abertura')" style="margin-top:6px;font-size:0.72rem;background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:5px;cursor:pointer">Marcar agora</button>
+        </div>
+        <div class="finish-time-item">
+          <label>Fechamento finalizado às</label>
+          <div class="finish-time-val">${sd.horario_fechamento_fim || '—'}</div>
+          <button onclick="markFinishTime('fechamento')" style="margin-top:6px;font-size:0.72rem;background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:5px;cursor:pointer">Marcar agora</button>
+        </div>
+      </div>
+      <textarea class="obs-final" placeholder="Observações gerais do setor..." onchange="saveField('${currentSector}/observacoes', this.value)">${sd.observacoes || ''}</textarea>
+      ${isSupervisor ? `
+        <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:var(--radius);padding:14px;margin-bottom:12px">
+          <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold);margin-bottom:6px">Duplo-Check do Supervisor</div>
+          <input type="text" value="${sd.supervisor_nome || ''}" placeholder="Nome do supervisor" onchange="saveField('${currentSector}/supervisor_nome', this.value)" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(201,168,76,0.3);color:var(--text);font-family:var(--font-sans);font-size:0.9rem;padding:4px 0;outline:none;margin-bottom:10px">
+          <textarea style="width:100%;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);color:var(--text);font-family:var(--font-sans);font-size:0.8rem;padding:8px;border-radius:6px;outline:none;resize:none;min-height:55px" placeholder="Observações do supervisor..." onchange="saveField('${currentSector}/supervisor_obs', this.value)">${sd.supervisor_obs || ''}</textarea>
+          <button class="btn-finish" style="background:var(--gold);color:#0d0d0d;margin-top:10px" onclick="supervisorApprove()">
+            ✔ Aprovar Checklist do Setor
+          </button>
+          ${sd.supervisor_aprovado ? `<div style="margin-top:10px;font-size:0.78rem;color:var(--green)">✅ Aprovado por ${sd.supervisor_nome || 'supervisor'} às ${sd.supervisor_hora || '—'}</div>` : ''}
+        </div>` : ''}
+      ${sd.supervisor_aprovado ? `<div style="color:var(--green);font-size:0.78rem;text-align:center;padding:8px">✅ Duplo-check concluído por ${sd.supervisor_nome || 'supervisor'}</div>` : ''}
+    </div>
+  `;
+
+  document.getElementById('checklist-body').innerHTML = html;
+  updateTabDots();
+}
+
+function renderItem(item, c, isSupervisor) {
+  const checked = c.done || false;
+  const svChecked = c.sv_done || false;
+  return `
+    <div class="check-item ${checked ? 'checked' : ''} ${svChecked ? 'supervisor-checked' : ''}" id="ci-${item.id}" onclick="toggleCheck('${item.id}')">
+      <div class="check-box"></div>
+      <div class="check-content">
+        <div class="check-label">${item.label}</div>
+        ${item.desc ? `<div class="check-desc">${item.desc}</div>` : ''}
+        <span class="check-obs-toggle" onclick="event.stopPropagation();toggleObsInput('obs-${item.id}')">+ obs</span>
+        <textarea class="check-obs-input" id="obs-${item.id}" placeholder="Observação sobre este item..." ${c.obs ? 'style="display:block"' : ''} onclick="event.stopPropagation()" onchange="saveField('${currentSector}/checks/${item.id}/obs', this.value)">${c.obs || ''}</textarea>
+        ${svChecked ? `<div style="font-size:0.68rem;color:var(--gold);margin-top:4px">✔ Verificado pelo supervisor</div>` : ''}
+      </div>
+      ${isSupervisor ? `<span class="supervisor-badge ${svChecked ? 'sv-done' : ''}" onclick="event.stopPropagation();toggleSvCheck('${item.id}')">${svChecked ? '✔ OK' : 'Verificar'}</span>` : ''}
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════════════════════
+function toggleCheck(itemId) {
+  if (USER.role === 'gestor') return; // gestor só visualiza
+  const sd = liveData[currentSector] || {};
+  const checks = sd.checks || {};
+  const current = checks[itemId] || {};
+  const newVal = !current.done;
+  getRef(`${currentSector}/checks/${itemId}`).update({
+    done: newVal,
+    done_by: newVal ? USER.name : null,
+    done_at: newVal ? getTimeStr() : null,
+  });
+}
+
+function toggleSvCheck(itemId) {
+  const sd = liveData[currentSector] || {};
+  const checks = sd.checks || {};
+  const current = checks[itemId] || {};
+  const newVal = !current.sv_done;
+  getRef(`${currentSector}/checks/${itemId}`).update({
+    sv_done: newVal,
+    sv_by: newVal ? USER.name : null,
+    sv_at: newVal ? getTimeStr() : null,
+  });
+}
+
+function supervisorApprove() {
+  const nome = document.querySelector(`input[placeholder="Nome do supervisor"]`);
+  if (!nome || !nome.value.trim()) { showToast('Preencha seu nome de supervisor'); return; }
+  getRef(currentSector).update({
+    supervisor_aprovado: true,
+    supervisor_nome: nome.value.trim(),
+    supervisor_hora: getTimeStr(),
+  });
+  showToast('✅ Checklist aprovado!');
+}
+
+function markFinishTime(type) {
+  const field = type === 'abertura' ? 'horario_abertura_fim' : 'horario_fechamento_fim';
+  getRef(currentSector).update({ [field]: getTimeStr() });
+  showToast('Horário marcado: ' + getTimeStr());
+}
+
+function saveField(path, value) {
+  getRef(path).set(value);
+}
+
+function toggleObsInput(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  if (el.style.display === 'block') el.focus();
+}
+
+// ══════════════════════════════════════════════════════════
+// OVERVIEW
+// ══════════════════════════════════════════════════════════
+function renderOverview() {
+  const grid = document.getElementById('overview-grid');
+  grid.innerHTML = Object.entries(SETORES).map(([key, s]) => {
+    const pct = calcProgress(key);
+    const sd = liveData[key] || {};
+    const color = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--border)';
+    const status = pct === 100
+      ? (sd.supervisor_aprovado ? '✅ Aprovado pelo supervisor' : '✅ Concluído — aguardando duplo-check')
+      : pct > 0 ? `${pct}% concluído` : 'Não iniciado';
+    const statusColor = pct === 100 ? (sd.supervisor_aprovado ? 'var(--green)' : 'var(--orange)') : pct > 0 ? 'var(--orange)' : 'var(--muted)';
+    return `
+      <div class="overview-card" onclick="showView('checklist');switchSector('${key}')">
+        <div class="ov-name">${s.emoji} ${s.nome}</div>
+        <div class="ov-sub">${sd.responsavel || 'Sem responsável'}</div>
+        <div class="ov-bar"><div class="ov-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="ov-pct" style="color:${color}">${pct}%</div>
+        <div class="ov-status" style="color:${statusColor}">${status}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// REFRESH
+// ══════════════════════════════════════════════════════════
+function refreshUI() {
+  if (currentView === 'checklist') renderChecklist();
+  if (currentView === 'overview') renderOverview();
+  updateTabDots();
+}
+
+// ══════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function logout() {
+  localStorage.removeItem('aura_user');
+  location.reload();
+}
+
+// ══════════════════════════════════════════════════════════
+// AUTO-LOGIN
+// ══════════════════════════════════════════════════════════
+(function autoLogin() {
+  const saved = localStorage.getItem('aura_user');
+  if (saved) {
+    try {
+      const u = JSON.parse(saved);
+      document.getElementById('user-name').value = u.name || '';
+      document.getElementById('user-role').value = u.role || 'operador';
+    } catch(e) {}
+  }
+})();
+</script>
+</body>
+</html>
