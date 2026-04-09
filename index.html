@@ -105,7 +105,21 @@ body {
   transition: border-color 0.2s;
 }
 .field-input:focus { border-color: var(--gold); }
-select.field-input option { background: #222; }
+select.field-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a8278' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+select.field-input option {
+  background: #ffffff;
+  color: #1a1712;
+  font-size: 15px;
+  padding: 8px;
+}
 
 .btn-primary {
   width: 100%;
@@ -619,19 +633,35 @@ select.field-input option { background: #222; }
     <div class="setup-sub">Checklist de Abertura & Fechamento</div>
 
     <div class="field-group">
-      <label class="field-label">Seu nome</label>
-      <input class="field-input" id="user-name" type="text" placeholder="Ex: João Carlos" autocomplete="name">
-    </div>
-    <div class="field-group">
       <label class="field-label">Função</label>
-      <select class="field-input" id="user-role">
+      <select class="field-input" id="user-role" onchange="onRoleChange()">
+        <option value="">Selecione sua função...</option>
         <option value="operador">Operador (preenche checklist)</option>
         <option value="supervisor">Supervisor (valida checklist)</option>
         <option value="gestor">Gestor (acompanha tudo)</option>
       </select>
     </div>
+
+    <!-- Setor: só aparece para operador -->
+    <div class="field-group" id="setor-group" style="display:none">
+      <label class="field-label">Seu setor</label>
+      <select class="field-input" id="user-sector">
+        <option value="cozinha">🍳 Cozinha</option>
+        <option value="pizzaria">🍕 Pizzaria</option>
+        <option value="bar">🍸 Bar</option>
+        <option value="barback">🧊 Bar Back</option>
+        <option value="salao">🏮 Salão</option>
+        <option value="lavacao">🧼 Lavação</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Seu nome</label>
+      <input class="field-input" id="user-name" type="text" placeholder="Ex: João Carlos" autocomplete="name">
+    </div>
+
     <button class="btn-primary" onclick="startApp()">Entrar →</button>
-    <p style="font-size:0.72rem;color:var(--muted);margin-top:14px;text-align:center">Os dados ficam salvos em tempo real no Firebase para Igor e a equipe acompanharem.</p>
+    <p style="font-size:0.72rem;color:var(--muted);margin-top:14px;text-align:center">Os dados ficam salvos em tempo real para a gestão acompanhar.</p>
   </div>
 </div>
 
@@ -948,13 +978,21 @@ const FB_CONFIG = {
   projectId: "aura-checklist",
 };
 
+function onRoleChange() {
+  const role = document.getElementById('user-role').value;
+  document.getElementById('setor-group').style.display = role === 'operador' ? 'block' : 'none';
+}
+
 function startApp() {
   const name = document.getElementById('user-name').value.trim();
   const role = document.getElementById('user-role').value;
+  const sector = document.getElementById('user-sector').value;
+  if (!role) { showToast('Selecione sua função'); return; }
   if (!name) { showToast('Digite seu nome'); return; }
   USER.name = name;
   USER.role = role;
-  localStorage.setItem('aura_user', JSON.stringify({ name, role }));
+  USER.sector = role === 'operador' ? sector : null;
+  localStorage.setItem('aura_user', JSON.stringify({ name, role, sector: USER.sector }));
   initFirebase();
 }
 
@@ -980,7 +1018,10 @@ function launchApp() {
 
   const roleLbl = { operador: 'Operador', supervisor: 'Supervisor', gestor: 'Gestor' };
   const badge = document.getElementById('role-badge');
-  badge.textContent = `${USER.name} · ${roleLbl[USER.role]}`;
+  const sectorNome = USER.sector ? SETORES[USER.sector]?.nome : null;
+  badge.textContent = USER.role === 'operador'
+    ? `${USER.name} · ${sectorNome}`
+    : `${USER.name} · ${roleLbl[USER.role]}`;
   badge.className = `role-badge role-${USER.role}`;
 
   document.getElementById('date-badge').textContent = formatDateBR(today);
@@ -988,8 +1029,24 @@ function launchApp() {
 
   subscribeAll();
   renderSectorTabs();
+
+  // Operador vai direto pro seu setor
+  const startSector = USER.role === 'operador' && USER.sector ? USER.sector : 'cozinha';
   showView('checklist');
-  switchSector('cozinha');
+  switchSector(startSector);
+
+  // Marcar horário de início automaticamente se ainda não foi marcado
+  if (USER.role === 'operador' && USER.sector) {
+    const sRef = db.ref(`checklist/${today}/${USER.sector}`);
+    sRef.once('value', snap => {
+      const sd = snap.val() || {};
+      if (!sd.horario_inicio) {
+        sRef.update({ horario_inicio: getTimeStr(), responsavel: USER.name });
+      } else if (!sd.responsavel) {
+        sRef.update({ responsavel: USER.name });
+      }
+    });
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1020,9 +1077,16 @@ function showView(view) {
 // ══════════════════════════════════════════════════════════
 // SECTOR TABS
 // ══════════════════════════════════════════════════════════
+function getVisibleSectors() {
+  if (USER.role === 'operador' && USER.sector) {
+    return [[USER.sector, SETORES[USER.sector]]];
+  }
+  return Object.entries(SETORES);
+}
+
 function renderSectorTabs() {
   const tabs = document.getElementById('sector-tabs');
-  tabs.innerHTML = Object.entries(SETORES).map(([key, s]) => `
+  tabs.innerHTML = getVisibleSectors().map(([key, s]) => `
     <div class="sector-tab ${key === currentSector ? 'active' : ''}" id="tab-${key}" onclick="switchSector('${key}')">
       <span>${s.emoji}</span>${s.nome}
       <span class="tab-dot" id="dot-${key}"></span>
@@ -1031,7 +1095,7 @@ function renderSectorTabs() {
 }
 
 function updateTabDots() {
-  Object.entries(SETORES).forEach(([key, s]) => {
+  getVisibleSectors().forEach(([key]) => {
     const dot = document.getElementById(`dot-${key}`);
     if (!dot) return;
     const pct = calcProgress(key);
@@ -1088,11 +1152,11 @@ function renderChecklist() {
     <div class="responsible-row">
       <div class="responsible-field">
         <label>Responsável</label>
-        <input type="text" value="${sd.responsavel || ''}" placeholder="Nome do responsável" onchange="saveField('${currentSector}/responsavel', this.value)">
+        <input type="text" value="${sd.responsavel || USER.name}" placeholder="Nome do responsável" onchange="saveField('${currentSector}/responsavel', this.value)">
       </div>
       <div class="responsible-field">
-        <label>Horário de início</label>
-        <input type="text" value="${sd.horario_inicio || ''}" placeholder="HH:MM" onchange="saveField('${currentSector}/horario_inicio', this.value)">
+        <label>Início do serviço</label>
+        <div style="font-size:1rem;font-family:var(--font-serif);color:var(--gold);padding:6px 0;border-bottom:1px solid var(--border)">${sd.horario_inicio || getTimeStr()}</div>
       </div>
     </div>
   `;
@@ -1349,8 +1413,10 @@ function logout() {
   if (saved) {
     try {
       const u = JSON.parse(saved);
+      document.getElementById('user-role').value = u.role || '';
       document.getElementById('user-name').value = u.name || '';
-      document.getElementById('user-role').value = u.role || 'operador';
+      if (u.sector) document.getElementById('user-sector').value = u.sector;
+      onRoleChange();
     } catch(e) {}
   }
 })();
