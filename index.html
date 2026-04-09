@@ -10,17 +10,17 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 :root {
-  --bg: #0d0d0d;
-  --surface: #161616;
-  --surface2: #1f1f1f;
-  --border: #2a2a2a;
-  --gold: #c9a84c;
-  --gold2: #e8c97a;
-  --text: #f0ede8;
-  --muted: #6b6560;
-  --green: #4cae80;
-  --red: #c0504a;
-  --orange: #d4874a;
+  --bg: #f5f2ed;
+  --surface: #ffffff;
+  --surface2: #ede9e3;
+  --border: #ddd8cf;
+  --gold: #a07828;
+  --gold2: #c49a3c;
+  --text: #1a1712;
+  --muted: #8a8278;
+  --green: #2e7d55;
+  --red: #b03a35;
+  --orange: #b86a2a;
   --radius: 10px;
   --font-serif: 'DM Serif Display', serif;
   --font-sans: 'DM Sans', sans-serif;
@@ -262,7 +262,7 @@ select.field-input option { background: #222; }
   user-select: none;
 }
 .check-item:hover { border-color: #3a3a3a; }
-.check-item.checked { background: #0f1a12; border-color: #1e3a28; }
+.check-item.checked { background: #eaf4ee; border-color: #b8ddc8; }
 .check-item.supervisor-checked { border-left: 3px solid var(--gold); }
 
 .check-box {
@@ -339,8 +339,8 @@ select.field-input option { background: #222; }
   cursor: pointer;
   transition: all 0.2s;
 }
-.supervisor-badge:hover { background: rgba(201,168,76,0.2); }
-.supervisor-badge.sv-done { background: rgba(201,168,76,0.2); color: var(--gold2); }
+.supervisor-badge:hover { background: rgba(160,120,40,0.15); }
+.supervisor-badge.sv-done { background: rgba(160,120,40,0.15); color: var(--gold); }
 
 /* ─── PRODUCTION TABLE (Bar) ─── */
 .prod-table {
@@ -498,9 +498,9 @@ select.field-input option { background: #222; }
   border-radius: 20px;
   font-weight: 500;
 }
-.role-operador { background: rgba(255,255,255,0.08); color: var(--muted); }
-.role-supervisor { background: rgba(201,168,76,0.15); color: var(--gold); }
-.role-gestor { background: rgba(76,174,128,0.15); color: var(--green); }
+.role-operador { background: rgba(0,0,0,0.06); color: var(--muted); }
+.role-supervisor { background: rgba(160,120,40,0.12); color: var(--gold); }
+.role-gestor { background: rgba(46,125,85,0.12); color: var(--green); }
 
 /* ─── LOADER ─── */
 .loader { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 0.85rem; }
@@ -526,11 +526,84 @@ select.field-input option { background: #222; }
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ─── RESPONSIVE ─── */
+/* ─── RESPONSIVE / MOBILE ─── */
+
+/* Safe area para iPhone com notch e home indicator */
+:root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+/* Bottom nav respeita home indicator do iPhone */
+.bottom-nav {
+  padding-bottom: var(--safe-bottom);
+}
+.checklist-body,
+.overview-panel {
+  padding-bottom: calc(80px + var(--safe-bottom));
+}
+
+/* Header respeita notch do iPhone */
+.header {
+  padding-top: calc(14px + var(--safe-top));
+}
+
+/* Touch: aumentar área clicável dos itens */
+.check-item {
+  min-height: 52px;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-btn {
+  min-height: 54px;
+  -webkit-tap-highlight-color: transparent;
+}
+.supervisor-badge {
+  min-width: 70px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Inputs: font-size 16px evita zoom automático no iOS */
+.field-input,
+.temp-input,
+.prod-input,
+.obs-final,
+.check-obs-input,
+.responsible-field input {
+  font-size: 16px !important;
+}
+
+/* Prevent iOS input zoom on focus */
+@supports (-webkit-touch-callout: none) {
+  select, input, textarea { font-size: 16px !important; }
+}
+
+/* Scroll horizontal das tabs sem barra */
+.sector-tabs {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+.sector-tab { scroll-snap-align: start; }
+
 @media(max-width:480px) {
   .overview-grid { grid-template-columns: 1fr 1fr; }
   .responsible-row { grid-template-columns: 1fr; }
   .finish-time-row { grid-template-columns: 1fr 1fr; }
+  .header-right { gap: 6px; }
+  .role-badge { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .setup-card { padding: 28px 20px; }
+  .check-label { font-size: 0.92rem; }
+  .check-desc { font-size: 0.78rem; }
+  .checklist-body { padding: 16px 12px calc(80px + var(--safe-bottom)); }
+  .overview-panel { padding: 16px 12px calc(80px + var(--safe-bottom)); }
+}
+
+@media(max-width:360px) {
+  .sector-tab { padding: 12px 10px; font-size: 0.72rem; }
+  .logo { font-size: 1.1rem; }
 }
 </style>
 </head>
@@ -1102,7 +1175,7 @@ function renderChecklist() {
         <span class="phase-title">Fechamento</span>
         <span class="phase-progress">${feProg.done}/${feProg.total}</span>
       </div>
-      <div class="phase-bar"><div class="phase-bar-fill" style="width:${fePct}%;background:#5b9cf6"></div></div>`;
+      <div class="phase-bar"><div class="phase-bar-fill" style="width:${fePct}%;background:#4a7fc1"></div></div>`;
 
   s.fechamento.forEach(item => {
     const c = checks[item.id] || {};
@@ -1128,10 +1201,10 @@ function renderChecklist() {
       </div>
       <textarea class="obs-final" placeholder="Observações gerais do setor..." onchange="saveField('${currentSector}/observacoes', this.value)">${sd.observacoes || ''}</textarea>
       ${isSupervisor ? `
-        <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:var(--radius);padding:14px;margin-bottom:12px">
+        <div style="background:rgba(160,120,40,0.06);border:1px solid rgba(160,120,40,0.2);border-radius:var(--radius);padding:14px;margin-bottom:12px">
           <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold);margin-bottom:6px">Duplo-Check do Supervisor</div>
           <input type="text" value="${sd.supervisor_nome || ''}" placeholder="Nome do supervisor" onchange="saveField('${currentSector}/supervisor_nome', this.value)" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(201,168,76,0.3);color:var(--text);font-family:var(--font-sans);font-size:0.9rem;padding:4px 0;outline:none;margin-bottom:10px">
-          <textarea style="width:100%;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);color:var(--text);font-family:var(--font-sans);font-size:0.8rem;padding:8px;border-radius:6px;outline:none;resize:none;min-height:55px" placeholder="Observações do supervisor..." onchange="saveField('${currentSector}/supervisor_obs', this.value)">${sd.supervisor_obs || ''}</textarea>
+          <textarea style="width:100%;background:rgba(160,120,40,0.04);border:1px solid rgba(160,120,40,0.18);color:var(--text);font-family:var(--font-sans);font-size:0.8rem;padding:8px;border-radius:6px;outline:none;resize:none;min-height:55px" placeholder="Observações do supervisor..." onchange="saveField('${currentSector}/supervisor_obs', this.value)">${sd.supervisor_obs || ''}</textarea>
           <button class="btn-finish" style="background:var(--gold);color:#0d0d0d;margin-top:10px" onclick="supervisorApprove()">
             ✔ Aprovar Checklist do Setor
           </button>
