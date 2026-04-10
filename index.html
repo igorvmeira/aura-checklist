@@ -954,23 +954,24 @@ const SETORES = {
 // ══════════════════════════════════════════════════════════
 // ESTADO
 // ══════════════════════════════════════════════════════════
-let db = null;
-let USER = { name: '', role: '', sector: null };
-let currentSector = 'cozinha';
-let currentView = 'checklist';
-let today = getTodayStr();
-let liveData = {};
-let unsubscribeFns = [];
-
-// Hora de corte: antes das 05h da manhã = ainda é o dia anterior
-// Assim o fechamento após meia-noite fica no mesmo checklist do dia
+// ── Constantes (devem vir primeiro) ──
 const HOUR_CUTOFF = 5;
 
+const FB_CONFIG = {
+  apiKey: "AIzaSyC_iSwdMGUVC-_Yedl9dF_DhBnN-ihKF9w",
+  databaseURL: "https://aura-checklist-default-rtdb.firebaseio.com",
+  projectId: "aura-checklist",
+};
+
+const SENHAS = {
+  gestor:     '0207',
+  supervisor: '0207',
+};
+
+// ── Funções utilitárias ──
 function getTodayStr() {
   const d = new Date();
-  if (d.getHours() < HOUR_CUTOFF) {
-    d.setDate(d.getDate() - 1); // recua um dia
-  }
+  if (d.getHours() < HOUR_CUTOFF) d.setDate(d.getDate() - 1);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function getTimeStr() {
@@ -982,20 +983,14 @@ function formatDateBR(str) {
   return `${d}/${m}/${y}`;
 }
 
-// ══════════════════════════════════════════════════════════
-// START
-// ══════════════════════════════════════════════════════════
-const FB_CONFIG = {
-  apiKey: "AIzaSyC_iSwdMGUVC-_Yedl9dF_DhBnN-ihKF9w",
-  databaseURL: "https://aura-checklist-default-rtdb.firebaseio.com",
-  projectId: "aura-checklist",
-};
-
-// Senhas por função (hash simples — pode trocar os valores aqui)
-const SENHAS = {
-  gestor:     '0207',
-  supervisor: '0207',
-};
+// ── Estado ──
+let db = null;
+let USER = { name: '', role: '', sector: null };
+let currentSector = 'cozinha';
+let currentView = 'checklist';
+let liveData = {};
+let unsubscribeFns = [];
+const today = getTodayStr();
 
 function onRoleChange(clearSenha = true) {
   const role = document.getElementById('user-role').value;
@@ -1022,9 +1017,10 @@ function startApp() {
   // Validar senha para gestor e supervisor
   if (role === 'gestor' || role === 'supervisor') {
     const senhaCorreta = SENHAS[role];
-    // Normaliza: remove espaços, troca letra O por zero (erro comum em teclado mobile)
     const normalizar = s => s.trim().replace(/[Oo]/g, '0').replace(/[Ii]/g, '1');
-    if (normalizar(senha) !== normalizar(senhaCorreta)) {
+    const ok = normalizar(senha) === normalizar(senhaCorreta);
+    console.log('Senha digitada:', JSON.stringify(senha), '| Normalizada:', normalizar(senha), '| OK:', ok);
+    if (!ok) {
       showToast('Senha incorreta');
       document.getElementById('user-senha').value = '';
       document.getElementById('user-senha').focus();
@@ -1041,6 +1037,7 @@ function startApp() {
 
 function initFirebase() {
   try {
+    console.log('Iniciando Firebase...');
     if (firebase.apps.length === 0) {
       firebase.initializeApp({
         apiKey: FB_CONFIG.apiKey,
@@ -1049,9 +1046,11 @@ function initFirebase() {
       });
     }
     db = firebase.database();
+    console.log('Firebase ok, chamando launchApp...');
     launchApp();
   } catch(e) {
-    showToast('Erro ao conectar Firebase: ' + e.message);
+    console.error('Firebase erro:', e);
+    showToast('Erro Firebase: ' + e.message);
   }
 }
 
