@@ -634,7 +634,7 @@ select.field-input option {
 
     <div class="field-group">
       <label class="field-label">Função</label>
-      <select class="field-input" id="user-role" onchange="onRoleChange()">
+      <select class="field-input" id="user-role" onchange="onRoleChange(true)">
         <option value="">Selecione sua função...</option>
         <option value="operador">Operador (preenche checklist)</option>
         <option value="supervisor">Supervisor (valida checklist)</option>
@@ -997,12 +997,12 @@ const SENHAS = {
   supervisor: '0207',
 };
 
-function onRoleChange() {
+function onRoleChange(clearSenha = true) {
   const role = document.getElementById('user-role').value;
-  document.getElementById('setor-group').style.display  = role === 'operador'  ? 'block' : 'none';
-  document.getElementById('senha-group').style.display  = (role === 'gestor' || role === 'supervisor') ? 'block' : 'none';
-  // Limpar senha ao trocar função
-  document.getElementById('user-senha').value = '';
+  document.getElementById('setor-group').style.display = role === 'operador' ? 'block' : 'none';
+  document.getElementById('senha-group').style.display = (role === 'gestor' || role === 'supervisor') ? 'block' : 'none';
+  // Limpa senha só quando o usuário troca manualmente, não no auto-login
+  if (clearSenha) document.getElementById('user-senha').value = '';
 }
 
 function startApp() {
@@ -1450,13 +1450,13 @@ function logout() {
       if (u.role === 'gestor' || u.role === 'supervisor') {
         document.getElementById('user-role').value = u.role;
         document.getElementById('user-name').value = u.name || '';
-        onRoleChange();
+        onRoleChange(false);
         return;
       }
       document.getElementById('user-role').value = u.role || '';
       document.getElementById('user-name').value = u.name || '';
       if (u.sector) document.getElementById('user-sector').value = u.sector;
-      onRoleChange();
+      onRoleChange(false);
     } catch(e) {}
   }
 })();
