@@ -658,7 +658,7 @@ select.field-input option {
     <!-- Senha: só aparece para gestor e supervisor -->
     <div class="field-group" id="senha-group" style="display:none">
       <label class="field-label">Senha de acesso</label>
-      <input class="field-input" id="user-senha" type="password" placeholder="••••••" autocomplete="off">
+      <input class="field-input" id="user-senha" type="text" placeholder="Digite a senha" autocomplete="off">
     </div>
 
     <div class="field-group">
@@ -1022,9 +1022,10 @@ function startApp() {
   // Validar senha para gestor e supervisor
   if (role === 'gestor' || role === 'supervisor') {
     const senhaCorreta = SENHAS[role];
-    const senhaDigitada = senha.trim();
+    // Remove qualquer caractere invisível, espaço ou quebra de linha
+    const senhaDigitada = senha.replace(/[^0-9a-zA-Z]/g, '');
     if (senhaDigitada !== senhaCorreta) {
-      showToast('Senha incorreta (' + senhaDigitada.length + ' caracteres digitados)');
+      showToast('Digitado: "' + senhaDigitada + '" | Esperado: "' + senhaCorreta + '"');
       document.getElementById('user-senha').value = '';
       document.getElementById('user-senha').focus();
       return;
