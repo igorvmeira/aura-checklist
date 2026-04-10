@@ -693,7 +693,7 @@ select.field-input option {
       </div>
 
       <!-- Navegação de datas -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;">
         <button onclick="changeViewingDate(-1)" style="background:none;border:none;color:var(--gold);font-size:1.2rem;cursor:pointer;padding:2px 6px;border-radius:5px;line-height:1" title="Dia anterior">‹</button>
         <div style="flex:1;text-align:center">
           <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:2px">Data visualizada</div>
@@ -701,6 +701,13 @@ select.field-input option {
           <div style="font-size:0.68rem;color:var(--gold);margin-top:1px" id="overview-today-badge"></div>
         </div>
         <button onclick="changeViewingDate(+1)" id="btn-next-day" style="background:none;border:none;color:var(--gold);font-size:1.2rem;cursor:pointer;padding:2px 6px;border-radius:5px;line-height:1" title="Próximo dia">›</button>
+      </div>
+
+      <!-- Botão de reset — só aparece para gestor -->
+      <div id="reset-block" style="display:none;margin-bottom:20px">
+        <button onclick="confirmReset()" style="width:100%;padding:10px;background:none;border:1px solid #d9534f;color:#d9534f;font-family:var(--font-sans);font-size:0.8rem;border-radius:var(--radius);cursor:pointer;letter-spacing:0.04em;transition:all 0.2s" onmouseover="this.style.background='rgba(217,83,79,0.08)'" onmouseout="this.style.background='none'">
+          🗑 Apagar checklist deste dia
+        </button>
       </div>
 
       <div id="overview-loading" style="display:none;text-align:center;padding:20px;color:var(--muted);font-size:0.82rem">
@@ -1461,12 +1468,15 @@ function renderOverview() {
   const label = document.getElementById('overview-date-label');
   const badge = document.getElementById('overview-today-badge');
   const btnNext = document.getElementById('btn-next-day');
+  const resetBlock = document.getElementById('reset-block');
   const isToday = viewingDate === today;
 
   if (label) label.textContent = formatDateBR(viewingDate);
   if (badge) badge.textContent = isToday ? 'hoje' : '';
   if (btnNext) btnNext.style.opacity = isToday ? '0.3' : '1';
   if (btnNext) btnNext.style.pointerEvents = isToday ? 'none' : 'auto';
+  // Botão de reset visível só para gestor
+  if (resetBlock) resetBlock.style.display = USER.role === 'gestor' ? 'block' : 'none';
 
   if (isToday) {
     renderOverviewGrid(liveData, true);
@@ -1491,10 +1501,36 @@ function changeViewingDate(delta) {
   const d = new Date(viewingDate + 'T12:00:00');
   d.setDate(d.getDate() + delta);
   const newDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  // Não permitir datas futuras
   if (newDate > today) return;
   viewingDate = newDate;
   renderOverview();
+}
+
+function confirmReset() {
+  const label = formatDateBR(viewingDate);
+  const isToday = viewingDate === today;
+  const msg = isToday
+    ? `Tem certeza que quer apagar TODO o checklist de HOJE (${label})?
+
+Esta ação não pode ser desfeita.`
+    : `Tem certeza que quer apagar o checklist de ${label}?
+
+Esta ação não pode ser desfeita.`;
+  if (!confirm(msg)) return;
+  resetDay();
+}
+
+function resetDay() {
+  db.ref(`checklist/${viewingDate}`).remove().then(() => {
+    showToast(`Checklist de ${formatDateBR(viewingDate)} apagado`);
+    if (viewingDate === today) {
+      liveData = {};
+      refreshUI();
+    }
+    renderOverview();
+  }).catch(e => {
+    showToast('Erro ao apagar: ' + e.message);
+  });
 }
 
 // ══════════════════════════════════════════════════════════
