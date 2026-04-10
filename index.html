@@ -655,6 +655,12 @@ select.field-input option {
       </select>
     </div>
 
+    <!-- Senha: só aparece para gestor e supervisor -->
+    <div class="field-group" id="senha-group" style="display:none">
+      <label class="field-label">Senha de acesso</label>
+      <input class="field-input" id="user-senha" type="password" placeholder="••••••" autocomplete="current-password">
+    </div>
+
     <div class="field-group">
       <label class="field-label">Seu nome</label>
       <input class="field-input" id="user-name" type="text" placeholder="Ex: João Carlos" autocomplete="name">
@@ -956,8 +962,15 @@ let today = getTodayStr();
 let liveData = {};
 let unsubscribeFns = [];
 
+// Hora de corte: antes das 05h da manhã = ainda é o dia anterior
+// Assim o fechamento após meia-noite fica no mesmo checklist do dia
+const HOUR_CUTOFF = 5;
+
 function getTodayStr() {
   const d = new Date();
+  if (d.getHours() < HOUR_CUTOFF) {
+    d.setDate(d.getDate() - 1); // recua um dia
+  }
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function getTimeStr() {
@@ -978,19 +991,39 @@ const FB_CONFIG = {
   projectId: "aura-checklist",
 };
 
+// Senhas por função (hash simples — pode trocar os valores aqui)
+const SENHAS = {
+  gestor:     '0207',
+  supervisor: '0207',
+};
+
 function onRoleChange() {
   const role = document.getElementById('user-role').value;
-  document.getElementById('setor-group').style.display = role === 'operador' ? 'block' : 'none';
+  document.getElementById('setor-group').style.display  = role === 'operador'  ? 'block' : 'none';
+  document.getElementById('senha-group').style.display  = (role === 'gestor' || role === 'supervisor') ? 'block' : 'none';
+  // Limpar senha ao trocar função
+  document.getElementById('user-senha').value = '';
 }
 
 function startApp() {
-  const name = document.getElementById('user-name').value.trim();
-  const role = document.getElementById('user-role').value;
+  const name  = document.getElementById('user-name').value.trim();
+  const role  = document.getElementById('user-role').value;
   const sector = document.getElementById('user-sector').value;
-  if (!role) { showToast('Selecione sua função'); return; }
-  if (!name) { showToast('Digite seu nome'); return; }
-  USER.name = name;
-  USER.role = role;
+  const senha = document.getElementById('user-senha').value;
+
+  if (!role)  { showToast('Selecione sua função'); return; }
+  if (!name)  { showToast('Digite seu nome'); return; }
+
+  // Validar senha para gestor e supervisor
+  if ((role === 'gestor' || role === 'supervisor') && senha !== SENHAS[role]) {
+    showToast('Senha incorreta');
+    document.getElementById('user-senha').value = '';
+    document.getElementById('user-senha').focus();
+    return;
+  }
+
+  USER.name   = name;
+  USER.role   = role;
   USER.sector = role === 'operador' ? sector : null;
   localStorage.setItem('aura_user', JSON.stringify({ name, role, sector: USER.sector }));
   initFirebase();
@@ -1413,6 +1446,13 @@ function logout() {
   if (saved) {
     try {
       const u = JSON.parse(saved);
+      // Gestor e supervisor precisam redigitar a senha — não auto-login
+      if (u.role === 'gestor' || u.role === 'supervisor') {
+        document.getElementById('user-role').value = u.role;
+        document.getElementById('user-name').value = u.name || '';
+        onRoleChange();
+        return;
+      }
       document.getElementById('user-role').value = u.role || '';
       document.getElementById('user-name').value = u.name || '';
       if (u.sector) document.getElementById('user-sector').value = u.sector;
