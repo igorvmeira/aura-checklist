@@ -658,7 +658,7 @@ select.field-input option {
     <!-- Senha: só aparece para gestor e supervisor -->
     <div class="field-group" id="senha-group" style="display:none">
       <label class="field-label">Senha de acesso</label>
-      <input class="field-input" id="user-senha" type="password" placeholder="••••••" autocomplete="current-password">
+      <input class="field-input" id="user-senha" type="password" placeholder="••••••" autocomplete="off">
     </div>
 
     <div class="field-group">
@@ -1000,9 +1000,14 @@ const SENHAS = {
 function onRoleChange(clearSenha = true) {
   const role = document.getElementById('user-role').value;
   document.getElementById('setor-group').style.display = role === 'operador' ? 'block' : 'none';
-  document.getElementById('senha-group').style.display = (role === 'gestor' || role === 'supervisor') ? 'block' : 'none';
-  // Limpa senha só quando o usuário troca manualmente, não no auto-login
-  if (clearSenha) document.getElementById('user-senha').value = '';
+  const senhaGroup = document.getElementById('senha-group');
+  senhaGroup.style.display = (role === 'gestor' || role === 'supervisor') ? 'block' : 'none';
+  // Sempre limpa o campo ao exibir/trocar para evitar autocomplete do browser
+  const senhaInput = document.getElementById('user-senha');
+  senhaInput.value = '';
+  // Trick para bloquear autocomplete: readonly momentâneo
+  senhaInput.setAttribute('readonly', true);
+  setTimeout(() => senhaInput.removeAttribute('readonly'), 100);
 }
 
 function startApp() {
@@ -1015,11 +1020,15 @@ function startApp() {
   if (!name)  { showToast('Digite seu nome'); return; }
 
   // Validar senha para gestor e supervisor
-  if ((role === 'gestor' || role === 'supervisor') && senha !== SENHAS[role]) {
-    showToast('Senha incorreta');
-    document.getElementById('user-senha').value = '';
-    document.getElementById('user-senha').focus();
-    return;
+  if (role === 'gestor' || role === 'supervisor') {
+    const senhaCorreta = SENHAS[role];
+    const senhaDigitada = senha.trim();
+    if (senhaDigitada !== senhaCorreta) {
+      showToast('Senha incorreta (' + senhaDigitada.length + ' caracteres digitados)');
+      document.getElementById('user-senha').value = '';
+      document.getElementById('user-senha').focus();
+      return;
+    }
   }
 
   USER.name   = name;
