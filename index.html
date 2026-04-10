@@ -685,11 +685,24 @@ select.field-input option {
 
   <div id="view-overview" style="display:none">
     <div class="overview-panel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div style="font-family:var(--font-serif);font-size:1.2rem;color:var(--text)">Visão Geral</div>
-        <div style="font-size:0.72rem;color:var(--muted)" id="overview-date"></div>
       </div>
-      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:20px">Progresso de todos os setores hoje</div>
+
+      <!-- Navegação de datas -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;">
+        <button onclick="changeViewingDate(-1)" style="background:none;border:none;color:var(--gold);font-size:1.2rem;cursor:pointer;padding:2px 6px;border-radius:5px;line-height:1" title="Dia anterior">‹</button>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:2px">Data visualizada</div>
+          <div style="font-size:0.95rem;font-family:var(--font-serif);color:var(--text)" id="overview-date-label">—</div>
+          <div style="font-size:0.68rem;color:var(--gold);margin-top:1px" id="overview-today-badge"></div>
+        </div>
+        <button onclick="changeViewingDate(+1)" id="btn-next-day" style="background:none;border:none;color:var(--gold);font-size:1.2rem;cursor:pointer;padding:2px 6px;border-radius:5px;line-height:1" title="Próximo dia">›</button>
+      </div>
+
+      <div id="overview-loading" style="display:none;text-align:center;padding:20px;color:var(--muted);font-size:0.82rem">
+        <div class="spinner" style="width:20px;height:20px;margin:0 auto 8px"></div>Carregando...
+      </div>
       <div class="overview-grid" id="overview-grid"></div>
     </div>
   </div>
@@ -991,6 +1004,8 @@ let currentView = 'checklist';
 let liveData = {};
 let unsubscribeFns = [];
 const today = getTodayStr();
+let viewingDate = today; // data sendo visualizada na visão geral
+let viewingData = {};   // dados do dia visualizado
 
 function onRoleChange(clearSenha = true) {
   const role = document.getElementById('user-role').value;
@@ -1113,7 +1128,10 @@ function showView(view) {
   document.getElementById('view-overview').style.display = view === 'overview' ? 'block' : 'none';
   document.getElementById('nav-checklist').classList.toggle('active', view === 'checklist');
   document.getElementById('nav-overview').classList.toggle('active', view === 'overview');
-  if (view === 'overview') renderOverview();
+  if (view === 'overview') {
+    viewingDate = today; // sempre começa no dia atual
+    renderOverview();
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1401,26 +1419,77 @@ function toggleObsInput(id) {
 // ══════════════════════════════════════════════════════════
 // OVERVIEW
 // ══════════════════════════════════════════════════════════
-function renderOverview() {
+function calcProgressFromData(sectorKey, data) {
+  const s = SETORES[sectorKey];
+  const sd = data[sectorKey] || {};
+  const all = [...s.abertura, ...s.fechamento];
+  if (!all.length) return 0;
+  const done = all.filter(item => sd.checks && sd.checks[item.id]?.done).length;
+  return Math.round((done / all.length) * 100);
+}
+
+function renderOverviewGrid(data, isToday) {
   const grid = document.getElementById('overview-grid');
   grid.innerHTML = Object.entries(SETORES).map(([key, s]) => {
-    const pct = calcProgress(key);
-    const sd = liveData[key] || {};
+    const sd = data[key] || {};
+    const pct = calcProgressFromData(key, data);
     const color = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--border)';
     const status = pct === 100
       ? (sd.supervisor_aprovado ? '✅ Aprovado pelo supervisor' : '✅ Concluído — aguardando duplo-check')
       : pct > 0 ? `${pct}% concluído` : 'Não iniciado';
     const statusColor = pct === 100 ? (sd.supervisor_aprovado ? 'var(--green)' : 'var(--orange)') : pct > 0 ? 'var(--orange)' : 'var(--muted)';
+    const horario = sd.horario_inicio ? `Início: ${sd.horario_inicio}` : '';
+    const clickAction = isToday ? `onclick="showView('checklist');switchSector('${key}')"` : '';
     return `
-      <div class="overview-card" onclick="showView('checklist');switchSector('${key}')">
+      <div class="overview-card" ${clickAction} style="${!isToday ? 'cursor:default' : ''}">
         <div class="ov-name">${s.emoji} ${s.nome}</div>
-        <div class="ov-sub">${sd.responsavel || 'Sem responsável'}</div>
+        <div class="ov-sub">${sd.responsavel || 'Sem responsável'}${horario ? ' · ' + horario : ''}</div>
         <div class="ov-bar"><div class="ov-bar-fill" style="width:${pct}%;background:${color}"></div></div>
         <div class="ov-pct" style="color:${color}">${pct}%</div>
         <div class="ov-status" style="color:${statusColor}">${status}</div>
       </div>
     `;
   }).join('');
+}
+
+function renderOverview() {
+  const label = document.getElementById('overview-date-label');
+  const badge = document.getElementById('overview-today-badge');
+  const btnNext = document.getElementById('btn-next-day');
+  const isToday = viewingDate === today;
+
+  if (label) label.textContent = formatDateBR(viewingDate);
+  if (badge) badge.textContent = isToday ? 'hoje' : '';
+  if (btnNext) btnNext.style.opacity = isToday ? '0.3' : '1';
+  if (btnNext) btnNext.style.pointerEvents = isToday ? 'none' : 'auto';
+
+  if (isToday) {
+    renderOverviewGrid(liveData, true);
+  } else {
+    document.getElementById('overview-loading').style.display = 'block';
+    document.getElementById('overview-grid').innerHTML = '';
+    db.ref(`checklist/${viewingDate}`).once('value', snap => {
+      document.getElementById('overview-loading').style.display = 'none';
+      const data = snap.val() || {};
+      const empty = Object.keys(data).length === 0;
+      if (empty) {
+        document.getElementById('overview-grid').innerHTML =
+          '<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--muted);font-size:0.85rem">Nenhum registro encontrado para este dia.</div>';
+      } else {
+        renderOverviewGrid(data, false);
+      }
+    });
+  }
+}
+
+function changeViewingDate(delta) {
+  const d = new Date(viewingDate + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  const newDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  // Não permitir datas futuras
+  if (newDate > today) return;
+  viewingDate = newDate;
+  renderOverview();
 }
 
 // ══════════════════════════════════════════════════════════
