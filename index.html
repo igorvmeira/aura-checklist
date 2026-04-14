@@ -1,18 +1,507 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aura — Checklist Operacional</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Aura — Checklist Operacional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════════════════════════
+   TOKENS
+══════════════════════════════════ */
+:root {
+  --bg:       #f5f0e8;
+  --surface:  #ede7d9;
+  --card:     #faf7f2;
+  --border:   #d9d0bc;
+  --gold:     #a0742a;
+  --gold-dim: #c49a48;
+  --text:     #2a2418;
+  --muted:    #8a7d65;
+  --danger:   #c0392b;
+  --ok:       #2e7d32;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans:  'DM Sans', sans-serif;
+  --radius: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+/* ══════════════════════════════════
+   LOGIN
+══════════════════════════════════ */
+#view-login {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: radial-gradient(ellipse at 50% 0%, #e8dfc8 0%, var(--bg) 60%);
+}
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 32px 32px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.login-logo {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  color: var(--text);
+  letter-spacing: .5px;
+}
+.login-logo span { color: var(--gold); }
+.login-subtitle {
+  font-size: .82rem;
+  color: var(--muted);
+  margin-top: -14px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-group label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.field-group input,
+.field-group select,
+.field-group textarea {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: .92rem;
+  padding: 11px 14px;
+  outline: none;
+  transition: border .2s;
+  width: 100%;
+}
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus { border-color: var(--gold); }
+.field-group select option { background: var(--card); }
+.toggle-group { display: flex; gap: 8px; }
+.toggle-btn {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: .88rem;
+  padding: 10px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.toggle-btn.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #faf7f2;
+  font-weight: 600;
+}
+.btn-primary {
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius);
+  color: #faf7f2;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: .9rem;
+  font-weight: 600;
+  padding: 13px;
+  width: 100%;
+  transition: opacity .2s;
+}
+.btn-primary:hover { opacity: .88; }
+.login-info { font-size: .75rem; color: var(--muted); text-align: center; line-height: 1.5; }
+
+/* ══════════════════════════════════
+   APP HEADER
+══════════════════════════════════ */
+#app { display: flex; flex-direction: column; min-height: 100dvh; }
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.app-logo { font-family: var(--font-serif); font-size: 1.3rem; }
+.app-logo span { color: var(--gold); }
+.header-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.badge-role {
+  background: var(--gold);
+  color: #faf7f2;
+  border-radius: 20px;
+  font-size: .7rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.badge-date { font-size: .72rem; color: var(--muted); }
+
+/* ══════════════════════════════════
+   BOTTOM NAV
+══════════════════════════════════ */
+.bottom-nav {
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+}
+.nav-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-sans);
+  font-size: .68rem;
+  padding: 10px 4px;
+  transition: color .2s;
+}
+.nav-btn span { font-size: 1.2rem; }
+.nav-btn.active { color: var(--gold); }
+
+/* ══════════════════════════════════
+   PROGRESS BAR
+══════════════════════════════════ */
+.progress-wrap {
+  background: var(--surface);
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.progress-track {
+  flex: 1;
+  height: 5px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 99px;
+  transition: width .4s ease;
+  width: 0%;
+}
+.progress-pct { font-size: .78rem; color: var(--gold); font-weight: 600; min-width: 34px; text-align: right; }
+
+/* ══════════════════════════════════
+   CHECKLIST HEADER
+══════════════════════════════════ */
+.cl-header {
+  padding: 16px 20px 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.cl-setor { font-family: var(--font-serif); font-size: 1.4rem; }
+.cl-turno {
+  font-size: .72rem;
+  color: var(--muted);
+  background: var(--border);
+  border-radius: 20px;
+  padding: 2px 10px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+/* ══════════════════════════════════
+   SEÇÕES
+══════════════════════════════════ */
+.section-block { padding: 0 16px 8px; }
+.section-title {
+  font-size: .72rem;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  padding: 16px 4px 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+/* ══════════════════════════════════
+   ITEM DE CHECKLIST
+══════════════════════════════════ */
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .15s;
+  border-radius: 6px;
+}
+.check-item:hover { background: var(--surface); }
+.check-item.done .item-label { color: var(--muted); text-decoration: line-through; }
+.check-box {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .8rem;
+  transition: all .2s;
+  margin-top: 1px;
+}
+.check-item.done .check-box {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #0e0d0b;
+}
+.item-text { flex: 1; }
+.item-label { font-size: .9rem; line-height: 1.4; }
+.item-desc { font-size: .75rem; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+
+/* ══════════════════════════════════
+   CAMPOS DE TEMPERATURA / PRODUÇÃO
+══════════════════════════════════ */
+.temp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px 4px 4px;
+}
+.temp-field label { font-size: .72rem; color: var(--muted); margin-bottom: 4px; display: block; }
+.temp-field input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: .88rem;
+  padding: 9px 12px;
+  width: 100%;
+  outline: none;
+}
+.temp-field input:focus { border-color: var(--gold); }
+
+.prod-group { margin-bottom: 12px; }
+.prod-group-title { font-size: .75rem; color: var(--muted); margin: 10px 0 6px; letter-spacing: .4px; }
+.prod-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.prod-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: .78rem;
+  color: var(--text);
+}
+.prod-chip input {
+  width: 44px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: .78rem;
+  padding: 3px 6px;
+  outline: none;
+  text-align: center;
+}
+
+/* ══════════════════════════════════
+   ASSINATURA
+══════════════════════════════════ */
+.assinatura-wrap {
+  margin: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.assin-title {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  color: var(--text);
+}
+.assin-signed {
+  font-size: .82rem;
+  color: var(--ok);
+  font-style: italic;
+}
+
+/* ══════════════════════════════════
+   OVERVIEW / SUPERVISOR
+══════════════════════════════════ */
+.overview-wrap { padding: 16px; flex: 1; }
+.overview-title { font-family: var(--font-serif); font-size: 1.4rem; margin-bottom: 4px; }
+.overview-sub { font-size: .78rem; color: var(--muted); margin-bottom: 20px; }
+.overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.setor-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.setor-card:hover { border-color: var(--gold-dim); }
+.setor-card-emoji { font-size: 1.4rem; margin-bottom: 6px; }
+.setor-card-nome { font-size: .88rem; font-weight: 500; margin-bottom: 8px; }
+.setor-card-bar { height: 4px; background: var(--border); border-radius: 99px; margin-bottom: 6px; overflow: hidden; }
+.setor-card-fill { height: 100%; background: var(--gold); border-radius: 99px; transition: width .5s; }
+.setor-card-pct { font-size: .72rem; color: var(--muted); }
+.sig-badge {
+  font-size: .65rem;
+  border-radius: 20px;
+  padding: 2px 8px;
+  margin-top: 6px;
+  display: inline-block;
+}
+.sig-ok { background: #1a3320; color: var(--ok); }
+.sig-pending { background: #2a1a0a; color: #e08030; }
+
+/* DETALHE SUPERVISOR */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.btn-back {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: .82rem;
+  padding: 6px 12px;
+}
+.detail-title { font-family: var(--font-serif); font-size: 1.2rem; }
+.detail-body { padding: 16px; }
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: .85rem;
+}
+.detail-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-ok { background: var(--ok); }
+.dot-no { background: var(--danger); }
+.assin-sup-wrap {
+  margin: 0 16px 80px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ══════════════════════════════════
+   LOADER
+══════════════════════════════════ */
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 20px;
+  color: var(--muted);
+  font-size: .88rem;
+}
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════
+   MODAL TURNO SUPERVISOR
+══════════════════════════════════ */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.filter-bar select,
+.filter-bar input[type=date] {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: .82rem;
+  padding: 7px 10px;
+  outline: none;
+}
+.btn-filter {
+  background: var(--gold);
+  border: none;
+  border-radius: 8px;
+  color: #faf7f2;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: .82rem;
+  font-weight: 600;
+  padding: 7px 16px;
+}
+
+@media (max-width: 480px) {
+  .login-card { padding: 28px 20px 24px; }
+  .overview-grid { grid-template-columns: 1fr; }
+  .temp-grid { grid-template-columns: 1fr; }
+}
+</style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════
-     TELA DE LOGIN
-════════════════════════════════════════ -->
+<!-- ════════════════════════════
+     LOGIN
+════════════════════════════ -->
 <div id="view-login">
   <div class="login-card">
     <div class="login-logo">Aura <span>Checklist</span></div>
@@ -20,14 +509,14 @@
 
     <div class="field-group">
       <label>Seu nome</label>
-      <input id="login-nome" type="text" placeholder="Ex: Carlos Silva" autocomplete="off" />
+      <input id="login-nome" type="text" placeholder="Ex: Carlos Silva" autocomplete="off"/>
     </div>
 
     <div class="field-group">
       <label>Setor</label>
       <select id="login-setor">
         <option value="">Selecione o setor…</option>
-        <option value="bar_principal">Bar Principal</option>
+        <option value="bar">Bar Principal</option>
         <option value="bar_back">Bar Back</option>
         <option value="salao">Salão</option>
         <option value="cozinha">Cozinha</option>
@@ -46,17 +535,15 @@
     </div>
 
     <button class="btn-primary" onclick="entrar()">Entrar</button>
-
     <p class="login-info">Os registros são salvos em tempo real no Firebase para a equipe acompanhar.</p>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     APP PRINCIPAL
-════════════════════════════════════════ -->
-<div id="app" style="display:none">
+<!-- ════════════════════════════
+     APP
+════════════════════════════ -->
+<div id="app" style="display:none; flex-direction:column; min-height:100dvh;">
 
-  <!-- HEADER -->
   <header class="app-header">
     <div class="app-logo">Aura <span>Checklist</span></div>
     <div class="header-meta">
@@ -65,74 +552,648 @@
     </div>
   </header>
 
-  <!-- VISÃO GERAL (supervisor) -->
-  <div id="view-overview" style="display:none">
-    <div class="overview-wrap">
-      <div class="overview-title">Visão Geral do Dia</div>
-      <p class="overview-sub" id="overview-date-label"></p>
-      <div class="overview-grid" id="overview-grid"></div>
+  <!-- CHECKLIST -->
+  <div id="view-checklist" style="display:none; flex:1; overflow-y:auto; padding-bottom:80px;">
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <span class="progress-pct" id="progress-pct">0%</span>
+    </div>
+    <div class="cl-header">
+      <div class="cl-setor" id="cl-setor"></div>
+      <div class="cl-turno" id="cl-turno"></div>
+    </div>
+    <div id="checklist-content"></div>
+    <div class="assinatura-wrap" id="assinatura-wrap" style="display:none;">
+      <div class="assin-title">Assinatura do Responsável</div>
+      <div class="field-group">
+        <label>Observações (opcional)</label>
+        <textarea id="obs-text" rows="3" placeholder="Registre qualquer ocorrência…"></textarea>
+      </div>
+      <div class="field-group">
+        <label>Nome completo para assinar</label>
+        <input id="assin-input" type="text" placeholder="Digite seu nome completo"/>
+      </div>
+      <button class="btn-primary" onclick="assinarResponsavel()">Finalizar e Assinar</button>
+      <p class="assin-signed" id="assin-ok" style="display:none;"></p>
+    </div>
+  </div>
+
+  <!-- OVERVIEW / SUPERVISOR -->
+  <div id="view-overview" style="display:none; flex:1; overflow-y:auto; padding-bottom:80px;">
+    <!-- grade de setores -->
+    <div id="overview-main">
+      <div class="filter-bar">
+        <input type="date" id="sv-date"/>
+        <select id="sv-turno">
+          <option value="">Todos os turnos</option>
+          <option value="abertura">Abertura</option>
+          <option value="fechamento">Fechamento</option>
+        </select>
+        <button class="btn-filter" onclick="carregarOverview()">Filtrar</button>
+      </div>
+      <div class="overview-wrap">
+        <div class="overview-title">Visão Geral</div>
+        <p class="overview-sub" id="overview-sub"></p>
+        <div class="overview-grid" id="overview-grid">
+          <div class="loader"><div class="spinner"></div>Carregando…</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Detalhe de setor (supervisor) -->
-    <div id="setor-detail" style="display:none">
+    <!-- detalhe de setor -->
+    <div id="overview-detail" style="display:none;">
       <div class="detail-header">
         <button class="btn-back" onclick="fecharDetalhe()">← Voltar</button>
         <div class="detail-title" id="detail-title"></div>
       </div>
       <div class="detail-body" id="detail-body"></div>
-      <div class="assinatura-supervisor" id="assinatura-supervisor-wrap">
-        <p class="assin-label">Assinatura do Supervisor</p>
-        <input id="assin-supervisor-input" type="text" placeholder="Digite seu nome completo para confirmar" />
+      <div class="assin-sup-wrap" id="assin-sup-wrap">
+        <div class="assin-title">Assinatura do Supervisor</div>
+        <div class="field-group">
+          <label>Nome completo</label>
+          <input id="assin-sup-input" type="text" placeholder="Digite seu nome completo"/>
+        </div>
         <button class="btn-primary" onclick="assinarSupervisor()">Assinar como Supervisor</button>
-        <p class="assin-signed" id="assin-supervisor-signed" style="display:none"></p>
+        <p class="assin-signed" id="assin-sup-ok" style="display:none;"></p>
       </div>
-    </div>
-  </div>
-
-  <!-- CHECKLIST (colaborador) -->
-  <div id="view-checklist" style="display:none">
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-track">
-        <div class="progress-bar-fill" id="progress-fill"></div>
-      </div>
-      <span class="progress-label" id="progress-label">0%</span>
-    </div>
-
-    <div class="checklist-header">
-      <div class="cl-setor" id="cl-setor-label"></div>
-      <div class="cl-turno" id="cl-turno-label"></div>
-    </div>
-
-    <div id="checklist-content"></div>
-
-    <!-- ASSINATURA DO RESPONSÁVEL -->
-    <div class="assinatura-wrap" id="assinatura-wrap" style="display:none">
-      <p class="assin-label">Assinatura do Responsável</p>
-      <textarea id="obs-textarea" placeholder="Observações (opcional)…" rows="3"></textarea>
-      <input id="assin-input" type="text" placeholder="Digite seu nome completo para assinar" />
-      <button class="btn-primary" onclick="assinarResponsavel()">Finalizar e Assinar</button>
-      <p class="assin-signed" id="assin-signed" style="display:none"></p>
     </div>
   </div>
 
   <!-- BOTTOM NAV -->
-  <nav class="bottom-nav" id="bottom-nav">
-    <button class="nav-btn active" id="nav-btn-checklist" onclick="showView('checklist')">
-      <span>✅</span> Checklist
+  <nav class="bottom-nav">
+    <button class="nav-btn" id="nav-cl" onclick="showView('checklist')">
+      <span>✅</span>Checklist
     </button>
-    <button class="nav-btn" id="nav-btn-overview" onclick="showView('overview')">
-      <span>📊</span> Visão Geral
+    <button class="nav-btn" id="nav-ov" onclick="showView('overview')">
+      <span>📊</span>Visão Geral
     </button>
     <button class="nav-btn" onclick="logout()">
-      <span>↩</span> Sair
+      <span>↩</span>Sair
     </button>
   </nav>
 </div>
 
-<!-- ════════════════════════════════════════
-     FIREBASE + APP.JS
-════════════════════════════════════════ -->
-<script type="module" src="app.js"></script>
+<!-- ════════════════════════════
+     FIREBASE
+════════════════════════════ -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+// ── CONFIG FIREBASE ─────────────────────────────────────
+// Substitua pelos seus valores do Firebase Console
+const firebaseConfig = {
+  apiKey:            import.meta.env?.VITE_FIREBASE_API_KEY            || window.__FIREBASE_API_KEY__            || "",
+  authDomain:        import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN        || window.__FIREBASE_AUTH_DOMAIN__        || "",
+  projectId:         import.meta.env?.VITE_FIREBASE_PROJECT_ID         || window.__FIREBASE_PROJECT_ID__         || "",
+  storageBucket:     import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET     || window.__FIREBASE_STORAGE_BUCKET__     || "",
+  messagingSenderId: import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID|| window.__FIREBASE_MESSAGING_SENDER_ID__|| "",
+  appId:             import.meta.env?.VITE_FIREBASE_APP_ID             || window.__FIREBASE_APP_ID__             || "",
+};
+
+let db = null;
+try {
+  if (firebaseConfig.projectId) {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+  }
+} catch(e) { console.warn('Firebase não inicializado, usando localStorage.', e); }
+
+// ══════════════════════════════════
+// DADOS DOS CHECKLISTS
+// ══════════════════════════════════
+const SETORES_CONFIG = {
+  bar: {
+    nome: 'Bar Principal', emoji: '🍸',
+    producoes: [
+      { grupo:'Guarnições', itens:['Angostura','Alecrim','Bala de Gengibre','Bala de Palha','Canela em Pau','Capim Santo','Cereja','Funcho','Gelo Frapê','Hortelã','Nibs Cacau','Palito Bambu','Laranja Bahia','Limão Siciliano','Limão Taiti','Tomilho'] },
+      { grupo:'Cordiais', itens:['Morango','Frutas Vermelhas','Verjus'] },
+      { grupo:'Xaropes', itens:['Simples'] },
+      { grupo:'Pré-Batch', itens:['Fitzgerald'] },
+      { grupo:'Espumas', itens:['Coco','Gengibre','Maracujá','Limão Siciliano'] },
+      { grupo:'Carbonatados', itens:['Água c/ Gás','Maçã Verde','Morango','Tangerina'] },
+    ],
+    abertura: [
+      { id:'bar_a1', label:'Abastecer canudos e descartáveis', desc:'Canudos, guardanapos, palitos e demais descartáveis nos dispensers e organizadores da praça.' },
+      { id:'bar_a2', label:'Abastecer coolers de gelo', desc:'Gelo suficiente para o início do serviço. Verificar temperatura dos coolers.' },
+      { id:'bar_a3', label:'Balcão limpo e sanitizado com álcool', desc:'Álcool 70% em toda a superfície do balcão e área de trabalho.' },
+      { id:'bar_a4', label:'Conferir destilados, xaropes e cordiais', desc:'Verificar nível de cada garrafa. Reposições necessárias já deixar separadas.' },
+      { id:'bar_a5', label:'Praças de drinks e sucos posicionadas', desc:'Cada praça montada com o que precisa: shakers, dosadores, colheres, copos, tampas.' },
+      { id:'bar_a6', label:'Comandeira ligada e testada', desc:'Enviar pedido de teste antes da abertura.' },
+      { id:'bar_a7', label:'Conferir produções do dia', desc:'Verificar espumas, cordiais, pré-batchs e carbonatados. Anotar quantidades na tabela acima.' },
+      { id:'bar_a8', label:'Copos higienizados e polidos', desc:'Sem manchas de água. Copos de vinho, taças e long drinks separados por tipo.' },
+      { id:'bar_a9', label:'Geladeira de serviço abastecida', desc:'Cervejas, refrigerantes, sucos e tônicos nas posições corretas e em temperatura.' },
+      { id:'bar_a10', label:'Gelos moldados disponíveis', desc:'Cubos grandes e gelo frapê prontos para o serviço.' },
+    ],
+    fechamento: [
+      { id:'bar_f1', label:'Zerar praças e guardar insumos', desc:'Todos os insumos devem ser armazenados nas posições corretas. Nada deixado sobre o balcão.' },
+      { id:'bar_f2', label:'Lavar e guardar todos os utensílios', desc:'Shakers, dosadores, colheres, espremedor. Secos antes de guardar.' },
+      { id:'bar_f3', label:'Higienizar balcão e pia com álcool', desc:'Álcool 70% por último, após lavar com água e detergente.' },
+      { id:'bar_f4', label:'Descartar gelos e limpar coolers', desc:'Esvaziar, lavar com detergente e deixar destampados para secar.' },
+      { id:'bar_f5', label:'Fechar e selar garrafas abertas', desc:'Rolhas, tampas ou filme plástico. Nunca guardar garrafa aberta sem vedação.' },
+      { id:'bar_f6', label:'Conferir e fechar geladeira de serviço', desc:'Verificar se tudo está dentro e se a geladeira fechou completamente.' },
+      { id:'bar_f7', label:'Apagar luzes e desligar equipamentos', desc:'Liquidificadores, espremedor, tablets de comanda. Conferir tomadas.' },
+      { id:'bar_f8', label:'Recolher lixo e colocar saco novo', desc:'Retirar saco, amarrar e levar ao ponto de coleta. Lixeira limpa e com saco novo.' },
+      { id:'bar_f9', label:'Enviar relatório de quebras', desc:'Item, quantidade e motivo de cada quebra (copos, garrafas, etc).' },
+      { id:'bar_f10', label:'Enviar lista de compras', desc:'Itens abaixo do estoque mínimo com urgência indicada.' },
+    ],
+  },
+
+  bar_back: {
+    nome: 'Bar Back', emoji: '📦',
+    abertura: [
+      { id:'bb_a1', label:'Conferir estoque de bebidas no depósito', desc:'Destilados, cervejas, refrigerantes, sucos. Conferir datas e armazenamento correto.' },
+      { id:'bb_a2', label:'Abastecer frigobar e geladeira de serviço', desc:'Completar cervejas, refrigerantes, sucos e tônicos conforme par de estoque.' },
+      { id:'bb_a3', label:'Conferir e repor materiais de limpeza', desc:'Álcool 70%, detergente, panos, papel toalha. Deixar na quantidade certa nas estações.' },
+      { id:'bb_a4', label:'Produzir gelo ou verificar nível da máquina', desc:'Verificar se máquina de gelo está funcionando. Nível mínimo para o turno.' },
+      { id:'bb_a5', label:'Organizar área de estoque', desc:'Produtos novos atrás, produtos mais velhos na frente (PEPS). Sem caixas no chão.' },
+      { id:'bb_a6', label:'Verificar validades dos produtos', desc:'Especial atenção para sucos, refrigerantes e produtos em embalagem aberta.' },
+    ],
+    fechamento: [
+      { id:'bb_f1', label:'Dar baixa no consumo do turno', desc:'Registrar saídas de estoque: bebidas consumidas, materiais usados.' },
+      { id:'bb_f2', label:'Organizar depósito e fechar caixas', desc:'Produtos corretamente armazenados. Nenhuma caixa aberta sem necessidade.' },
+      { id:'bb_f3', label:'Checar se geladeiras e freezers estão fechados', desc:'Todas as portas fechadas e vedadas corretamente.' },
+      { id:'bb_f4', label:'Limpar piso e área de back', desc:'Varrer, tirar poeira de prateleiras, limpar superfícies.' },
+      { id:'bb_f5', label:'Listar itens para reposição', desc:'Enviar lista de compras com itens abaixo do mínimo para a gestão.' },
+      { id:'bb_f6', label:'Fechar e trancar depósito', desc:'Verificar se porta está trancada e chave entregue ao responsável.' },
+    ],
+  },
+
+  salao: {
+    nome: 'Salão', emoji: '🪑',
+    abertura: [
+      { id:'sal_a1', label:'Mesas limpas, alinhadas e completas', desc:'Tampo limpo, sem manchas. Cadeiras e puffs alinhados. Quantidade de assentos correta.' },
+      { id:'sal_a2', label:'Mise en place de mesa', desc:'Porta-guardanapo, porta-copos e objetos de decoração no lugar correto em cada mesa.' },
+      { id:'sal_a3', label:'Piso varrido e limpo', desc:'Sem papéis, lixo ou sujeira visível. Tapetes ajustados. Capacho limpo.' },
+      { id:'sal_a4', label:'Banheiros limpos e abastecidos', desc:'Papel higiênico, sabão líquido, papel toalha, lixeira com saco. Pia limpa e seca.' },
+      { id:'sal_a5', label:'Iluminação conferida', desc:'Todas as lâmpadas funcionando. Dimmer na configuração correta para o horário.' },
+      { id:'sal_a6', label:'Música e som testados', desc:'Volume adequado para o horário. Playlist correta configurada.' },
+      { id:'sal_a7', label:'Cardápios limpos e completos', desc:'Sem marcas, rasgos ou falta de itens. Cardápios digitais funcionando.' },
+      { id:'sal_a8', label:'Recepção organizada', desc:'Mesa de recepção limpa, lista de reservas impressa ou no sistema, caneta e materiais ok.' },
+    ],
+    fechamento: [
+      { id:'sal_f1', label:'Limpar e organizar todas as mesas', desc:'Recolher todos os copos, pratos e utensílios. Tampos limpos e secos.' },
+      { id:'sal_f2', label:'Cadeiras sobre as mesas ou guardar', desc:'Conforme padrão da casa — cadeiras em cima das mesas ou encostadas para facilitar a limpeza do piso.' },
+      { id:'sal_f3', label:'Varrer e passar pano no piso', desc:'Todos os ambientes do salão, incluindo área de circulação e entrada.' },
+      { id:'sal_f4', label:'Limpar banheiros e reabastecer', desc:'Limpar piso, pia, vasos, espelhos. Repor papel, sabão e toalha para o próximo dia.' },
+      { id:'sal_f5', label:'Recolher cardápios e guardar', desc:'Cardápios limpos e guardados no local correto.' },
+      { id:'sal_f6', label:'Apagar luzes e desligar som', desc:'Conferir todos os pontos de luz e equipamentos de som.' },
+      { id:'sal_f7', label:'Fechar janelas e verificar portas', desc:'Todas as janelas fechadas. Portas conferidas antes de sair.' },
+      { id:'sal_f8', label:'Recolher lixo do salão', desc:'Trocar sacos de todas as lixeiras do salão e banheiros.' },
+    ],
+  },
+
+  cozinha: {
+    nome: 'Cozinha', emoji: '🍳',
+    temperaturas: [
+      { id:'temp_gel_ini', label:'Geladeira — inicial (°C)', fase:'abertura' },
+      { id:'temp_fz_ini',  label:'Freezer — inicial (°C)',  fase:'abertura' },
+      { id:'temp_gel_fim', label:'Geladeira — final (°C)',  fase:'fechamento' },
+      { id:'temp_fz_fim',  label:'Freezer — final (°C)',    fase:'fechamento' },
+    ],
+    abertura: [
+      { id:'coz_a1', label:'Verificar temperatura dos freezers', desc:'Anotar leituras acima. Ideal: geladeira 1–4°C, freezer -18°C ou abaixo. Registrar anomalia se fora da faixa.' },
+      { id:'coz_a2', label:'Conferir plano de ataque', desc:'Revisar ficha de produções prioritárias do dia antes de iniciar qualquer preparo.' },
+      { id:'coz_a3', label:'Higiene pessoal e EPI', desc:'Cabelo aparado/preso, unhas curtas e sem esmalte, touca descartável, sapato antiderrapante, uniforme completo.' },
+      { id:'coz_a4', label:'Conferir uniformes da equipe', desc:'Blusa do uniforme, calça escura, touca descartável, sapato antiderrapante. Ninguém entra na cozinha sem EPI.' },
+      { id:'coz_a5', label:'Higienizar bancadas e equipamentos', desc:'Álcool 70% em todas as superfícies de preparo antes de começar.' },
+      { id:'coz_a6', label:'Conferir mise en place do serviço', desc:'Molhos, pré-preparos e bases prontos conforme lista de produção do dia.' },
+      { id:'coz_a7', label:'Ativar equipamentos com antecedência', desc:'Forno, chapa, fritadeira. Verificar temperatura de operação antes do primeiro pedido.' },
+      { id:'coz_a8', label:'Conferir estoque de insumos para o turno', desc:'Carnes, hortifrútis, laticínios, embalagens. Separar o que será usado.' },
+      { id:'coz_a9', label:'Verificar validade dos produtos abertos', desc:'Todo produto aberto ou porcionado deve ter data e validade visível.' },
+      { id:'coz_a10',label:'Checar se coifas e exaustores estão funcionando', desc:'Ligar antes de acender fogões e fritadeiras.' },
+    ],
+    fechamento: [
+      { id:'coz_f1', label:'Verificar temperatura final dos freezers', desc:'Anotar leituras acima. Alertar gestão se temperatura fora da faixa.' },
+      { id:'coz_f2', label:'Armazenar todos os alimentos preparados', desc:'Em recipientes vedados com etiqueta (produto, data, validade). Temperatura correta.' },
+      { id:'coz_f3', label:'Lavar todos os utensílios e equipamentos', desc:'Facas, tábuas, bowls, formas, panelas. Secar e guardar nos locais corretos.' },
+      { id:'coz_f4', label:'Higienizar fogão e chapa', desc:'Remover gordura acumulada. Usar produtos adequados. Não apagar piloto sem autorização.' },
+      { id:'coz_f5', label:'Higienizar bancadas com detergente e álcool', desc:'Primeiro detergente + água, depois álcool 70% para finalizar.' },
+      { id:'coz_f6', label:'Lavar piso com água e produto desinfetante', desc:'Varrer primeiro. Focar em cantos e embaixo dos equipamentos.' },
+      { id:'coz_f7', label:'Recolher lixo e higienizar lixeiras', desc:'Retirar saco, amarrar, levar ao destino. Lavar lixeira por dentro e por fora. Colocar saco novo.' },
+      { id:'coz_f8', label:'Alimentar a PA', desc:'Registrar todas as produções e consumos do dia na planilha de acompanhamento.' },
+      { id:'coz_f9', label:'Enviar relatório de quebras', desc:'Item, quantidade e motivo de cada quebra no grupo da gestão.' },
+      { id:'coz_f10',label:'Enviar lista de compras', desc:'Itens abaixo do mínimo com indicação de urgência.' },
+      { id:'coz_f11',label:'Desligar todos os equipamentos', desc:'Forno, chapa, fritadeira, coifa, exaustor. Conferir tomadas.' },
+    ],
+  },
+
+  pizzaria: {
+    nome: 'Pizzaria', emoji: '🍕',
+    temperaturas: [
+      { id:'piz_temp_forno', label:'Temperatura do forno (°C)', fase:'abertura' },
+    ],
+    abertura: [
+      { id:'piz_a1', label:'Pré-aquecer o forno', desc:'Ligar com antecedência. Registrar temperatura de operação acima. Aguardar atingir 300°C ou temperatura definida.' },
+      { id:'piz_a2', label:'Conferir massas e fermentação', desc:'Verificar bolas de massa: quantidade, aspecto, fermentação adequada para o dia.' },
+      { id:'piz_a3', label:'Higienizar bancada e pedra refratária a frio', desc:'Limpar a fundo antes de aquecer. Nunca lavar pedra quente com água.' },
+      { id:'piz_a4', label:'Conferir molhos e coberturas', desc:'Molho de tomate, coberturas e queijos nas quantidades corretas. Datas de validade ok.' },
+      { id:'piz_a5', label:'Separar embalagens e descartáveis', desc:'Caixas de pizza, papel manteiga, folhas de forno. Quantidade suficiente para o turno.' },
+      { id:'piz_a6', label:'Pá, cortador e espátula limpos e posicionados', desc:'Utensílios higienizados e acessíveis para o serviço.' },
+      { id:'piz_a7', label:'Testar visor e sistema de comandas', desc:'Fazer pedido teste para confirmar que as comandas chegam à Pizzaria.' },
+    ],
+    fechamento: [
+      { id:'piz_f1', label:'Desligar o forno', desc:'Desligar no tempo correto para o forno esfriar de forma segura. Não fechar a porta imediatamente.' },
+      { id:'piz_f2', label:'Armazenar sobras de massa', desc:'Embalagem vedada com etiqueta (data e validade). Refrigeração imediata.' },
+      { id:'piz_f3', label:'Armazenar coberturas e molhos', desc:'Recipientes fechados, etiquetados. Temperaturas de armazenamento corretas.' },
+      { id:'piz_f4', label:'Limpar pedra com raspadeira (frio)', desc:'Aguardar esfriar completamente. Usar raspadeira. Nunca usar água com pedra quente.' },
+      { id:'piz_f5', label:'Lavar masseira', desc:'Higienizar completamente. Remover resíduos de massa de todas as partes.' },
+      { id:'piz_f6', label:'Lavar bancada e balcão', desc:'Detergente + água + álcool 70% para finalizar.' },
+      { id:'piz_f7', label:'Lavar chão e cantos', desc:'Varrer, lavar, rodo. Focar em cantos e embaixo dos equipamentos.' },
+      { id:'piz_f8', label:'Lavar facas e guardar', desc:'Individualmente, secar e guardar no suporte correto.' },
+      { id:'piz_f9', label:'Recolher o lixo', desc:'Retirar saco, amarrar, levar ao destino. Colocar saco novo.' },
+      { id:'piz_f10',label:'Alimentar a PA', desc:'Registrar produções e consumos do dia.' },
+      { id:'piz_f11',label:'Enviar documentos no grupo da gestão', desc:'Checklist, quebras e lista de compras.' },
+    ],
+  },
+
+  lavacao: {
+    nome: 'Lavação', emoji: '🧼',
+    abertura: [
+      { id:'lav_a1', label:'Conferir estoque de produtos de limpeza', desc:'Detergente, desengordurante, álcool 70%, esponjas, panos e papel toalha. Solicitar reposição se necessário.' },
+      { id:'lav_a2', label:'Higienizar pia e bancada da lavação', desc:'Lavar com detergente, enxaguar e sanitizar com álcool ou desinfetante.' },
+      { id:'lav_a3', label:'Verificar temperatura da água quente', desc:'Torneira de água quente funcionando corretamente para higienização eficiente.' },
+      { id:'lav_a4', label:'Organizar área de louça suja e limpa', desc:'Definir claramente as áreas de entrada (suja) e saída (limpa). Nunca misturar.' },
+      { id:'lav_a5', label:'Checar máquina de lavar (se houver)', desc:'Verificar detergente e produtos da máquina. Testar ciclo antes do serviço.' },
+    ],
+    fechamento: [
+      { id:'lav_f1', label:'Lavar e guardar toda a louça do serviço', desc:'Nenhum item sujo deve ficar na área de lavação. Tudo higienizado, seco e guardado.' },
+      { id:'lav_f2', label:'Registrar quebras do turno', desc:'Registrar item, quantidade e motivo de cada quebra (pratos, copos, xícaras, etc).' },
+      { id:'lav_f3', label:'Higienizar pia, bancadas e ralos', desc:'Detergente + desengordurante. Ralos limpos e desobstruídos.' },
+      { id:'lav_f4', label:'Lavar e guardar panos e esponjas', desc:'Esponjas lavadas ou descartadas. Panos lavados, torcidos e pendurados para secar.' },
+      { id:'lav_f5', label:'Lavar piso da lavação', desc:'Varrer resíduos primeiro. Lavar com detergente. Rodo. Piso seco antes de fechar.' },
+      { id:'lav_f6', label:'Recolher lixo e higienizar lixeira', desc:'Retirar saco, amarrar, destinar. Lavar a lixeira por dentro e por fora. Saco novo.' },
+      { id:'lav_f7', label:'Desligar máquinas e fechar registros de água', desc:'Máquina de lavar desligada. Registro de água fechado se for o protocolo da casa.' },
+      { id:'lav_f8', label:'Enviar relatório de quebras', desc:'Item, quantidade e motivo de cada peça quebrada no turno.' },
+    ],
+  },
+};
+
+// ══════════════════════════════════
+// ESTADO
+// ══════════════════════════════════
+let state = {
+  nome: '', setor: '', turno: 'abertura',
+  isSupervisor: false,
+  checks: {}, temps: {}, prods: {}, obs: '',
+  docId: null,
+  detalheDocId: null,
+};
+
+// ══════════════════════════════════
+// HELPERS
+// ══════════════════════════════════
+function hoje() {
+  return new Date().toISOString().slice(0,10);
+}
+function formatData(d) {
+  return d ? d.split('-').reverse().join('/') : '';
+}
+function gerarDocId(setor, turno, data) {
+  return `${setor}_${turno}_${data}`;
+}
+
+// ══════════════════════════════════
+// LOGIN
+// ══════════════════════════════════
+window.selectTurno = function(btn) {
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.turno = btn.dataset.value;
+};
+
+window.entrar = async function() {
+  const nome  = document.getElementById('login-nome').value.trim();
+  const setor = document.getElementById('login-setor').value;
+  if (!nome)  { alert('Digite seu nome.'); return; }
+  if (!setor) { alert('Selecione o setor.'); return; }
+
+  state.nome  = nome;
+  state.setor = setor;
+  state.isSupervisor = (setor === 'supervisor');
+  state.checks = {}; state.temps = {}; state.prods = {};
+
+  document.getElementById('view-login').style.display = 'none';
+  document.getElementById('app').style.display        = 'flex';
+  document.getElementById('badge-role').textContent   = nome;
+  document.getElementById('badge-date').textContent   = formatData(hoje());
+
+  if (state.isSupervisor) {
+    document.getElementById('nav-ov').classList.add('active');
+    document.getElementById('nav-cl').classList.remove('active');
+    document.getElementById('view-overview').style.display = 'flex';
+    document.getElementById('view-checklist').style.display = 'none';
+    document.getElementById('sv-date').value = hoje();
+    await carregarOverview();
+  } else {
+    document.getElementById('nav-cl').classList.add('active');
+    document.getElementById('nav-ov').classList.remove('active');
+    document.getElementById('view-checklist').style.display = 'block';
+    document.getElementById('view-overview').style.display  = 'none';
+    renderChecklist();
+  }
+};
+
+window.logout = function() {
+  state = { nome:'', setor:'', turno:'abertura', isSupervisor:false, checks:{}, temps:{}, prods:{}, obs:'', docId:null, detalheDocId:null };
+  document.getElementById('login-nome').value  = '';
+  document.getElementById('login-setor').value = '';
+  document.querySelectorAll('.toggle-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.getElementById('view-login').style.display = 'flex';
+  document.getElementById('app').style.display        = 'none';
+};
+
+// ══════════════════════════════════
+// NAVEGAÇÃO
+// ══════════════════════════════════
+window.showView = function(v) {
+  document.getElementById('view-checklist').style.display = v==='checklist' ? 'block' : 'none';
+  document.getElementById('view-overview').style.display  = v==='overview'  ? 'flex'  : 'none';
+  document.getElementById('nav-cl').classList.toggle('active', v==='checklist');
+  document.getElementById('nav-ov').classList.toggle('active', v==='overview');
+  if (v==='overview') carregarOverview();
+};
+
+// ══════════════════════════════════
+// RENDERIZAR CHECKLIST
+// ══════════════════════════════════
+function renderChecklist() {
+  const cfg = SETORES_CONFIG[state.setor];
+  if (!cfg) return;
+
+  document.getElementById('cl-setor').textContent = cfg.emoji + ' ' + cfg.nome;
+  document.getElementById('cl-turno').textContent = state.turno === 'abertura' ? 'Abertura' : 'Fechamento';
+
+  const itens = cfg[state.turno] || [];
+  const tempsDoTurno = (cfg.temperaturas || []).filter(t => t.fase === state.turno);
+  let html = '';
+
+  // Temperaturas
+  if (tempsDoTurno.length) {
+    html += `<div class="section-block"><div class="section-title">Temperaturas</div><div class="temp-grid">`;
+    for (const t of tempsDoTurno) {
+      html += `<div class="temp-field">
+        <label>${t.label}</label>
+        <input type="number" step="0.1" id="temp_${t.id}" placeholder="°C"
+          oninput="state.temps['${t.id}']=this.value; salvarRascunho()"/>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  // Produções (bar)
+  if (state.turno === 'abertura' && cfg.producoes) {
+    html += `<div class="section-block"><div class="section-title">Guarnições &amp; Produções</div>`;
+    for (const g of cfg.producoes) {
+      html += `<div class="prod-group"><div class="prod-group-title">${g.grupo}</div><div class="prod-items">`;
+      for (const item of g.itens) {
+        const k = 'prod_'+item.replace(/\s/g,'_');
+        html += `<div class="prod-chip">
+          <span>${item}</span>
+          <input type="number" min="0" placeholder="0" id="pi_${k}"
+            oninput="state.prods['${k}']=this.value; salvarRascunho()"/>
+        </div>`;
+      }
+      html += `</div></div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Itens
+  html += `<div class="section-block"><div class="section-title">Itens do Checklist</div>`;
+  for (const item of itens) {
+    html += `<div class="check-item" id="ci_${item.id}" onclick="toggleCheck('${item.id}')">
+      <div class="check-box" id="cb_${item.id}"></div>
+      <div class="item-text">
+        <div class="item-label">${item.label}</div>
+        ${item.desc ? `<div class="item-desc">${item.desc}</div>` : ''}
+      </div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  document.getElementById('checklist-content').innerHTML = html;
+  atualizarProgresso();
+}
+
+window.toggleCheck = function(id) {
+  state.checks[id] = !state.checks[id];
+  const ci = document.getElementById('ci_'+id);
+  const cb = document.getElementById('cb_'+id);
+  ci.classList.toggle('done', state.checks[id]);
+  cb.textContent = state.checks[id] ? '✓' : '';
+  atualizarProgresso();
+  salvarRascunho();
+};
+
+function atualizarProgresso() {
+  const cfg  = SETORES_CONFIG[state.setor];
+  const itens = cfg ? (cfg[state.turno] || []) : [];
+  const total = itens.length;
+  const feito = itens.filter(i => state.checks[i.id]).length;
+  const pct   = total ? Math.round(feito/total*100) : 0;
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent  = pct + '%';
+
+  // mostrar bloco de assinatura quando 100%
+  document.getElementById('assinatura-wrap').style.display = pct === 100 ? 'flex' : 'none';
+}
+
+// ══════════════════════════════════
+// SALVAR (Firebase ou localStorage)
+// ══════════════════════════════════
+async function salvarRascunho() {
+  const data = {
+    nome: state.nome, setor: state.setor, turno: state.turno,
+    data: hoje(), checks: state.checks, temps: state.temps, prods: state.prods,
+    atualizadoEm: new Date().toISOString(),
+    assinaturaResponsavel: null, assinaturaSupervisor: null,
+  };
+  const docId = gerarDocId(state.setor, state.turno, hoje());
+  state.docId = docId;
+
+  if (db) {
+    try { await setDoc(doc(db, 'checklists', docId), data, { merge: true }); } catch(e) {}
+  } else {
+    const prev = JSON.parse(localStorage.getItem(docId) || '{}');
+    localStorage.setItem(docId, JSON.stringify({...prev, ...data}));
+  }
+}
+
+// ══════════════════════════════════
+// ASSINAR RESPONSÁVEL
+// ══════════════════════════════════
+window.assinarResponsavel = async function() {
+  const nome = document.getElementById('assin-input').value.trim();
+  if (!nome) { alert('Digite seu nome completo para assinar.'); return; }
+
+  const obs = document.getElementById('obs-text').value.trim();
+  const docId = gerarDocId(state.setor, state.turno, hoje());
+
+  const payload = {
+    assinaturaResponsavel: nome,
+    obs,
+    finalizadoEm: new Date().toISOString(),
+  };
+
+  if (db) {
+    try { await setDoc(doc(db, 'checklists', docId), payload, { merge: true }); } catch(e) {}
+  } else {
+    const prev = JSON.parse(localStorage.getItem(docId) || '{}');
+    localStorage.setItem(docId, JSON.stringify({...prev, ...payload}));
+  }
+
+  document.getElementById('assin-input').disabled = true;
+  document.getElementById('assin-input').style.display = 'none';
+  document.getElementById('obs-text').disabled = true;
+  document.querySelector('#assinatura-wrap .btn-primary').style.display = 'none';
+  const ok = document.getElementById('assin-ok');
+  ok.textContent = `✓ Assinado por ${nome} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+  ok.style.display = 'block';
+};
+
+// ══════════════════════════════════
+// OVERVIEW (SUPERVISOR)
+// ══════════════════════════════════
+window.carregarOverview = async function() {
+  const dataSel  = document.getElementById('sv-date').value || hoje();
+  const turnoSel = document.getElementById('sv-turno').value;
+
+  document.getElementById('overview-sub').textContent = `${formatData(dataSel)}${turnoSel ? ' — '+turnoSel : ''}`;
+  document.getElementById('overview-grid').innerHTML  = '<div class="loader"><div class="spinner"></div>Carregando…</div>';
+  document.getElementById('overview-main').style.display  = 'block';
+  document.getElementById('overview-detail').style.display= 'none';
+
+  const setoresParaMostrar = ['bar','bar_back','salao','cozinha','pizzaria','lavacao'];
+  const turnos = turnoSel ? [turnoSel] : ['abertura','fechamento'];
+
+  let cards = '';
+  for (const s of setoresParaMostrar) {
+    const cfg = SETORES_CONFIG[s];
+    for (const t of turnos) {
+      const docId = gerarDocId(s, t, dataSel);
+      let dados = null;
+
+      if (db) {
+        try {
+          const snap = await getDoc(doc(db, 'checklists', docId));
+          if (snap.exists()) dados = snap.data();
+        } catch(e) {}
+      } else {
+        const raw = localStorage.getItem(docId);
+        if (raw) dados = JSON.parse(raw);
+      }
+
+      const itens = cfg[t] || [];
+      const total = itens.length;
+      const feito = dados ? itens.filter(i => dados.checks?.[i.id]).length : 0;
+      const pct   = total ? Math.round(feito/total*100) : 0;
+      const respOk  = dados?.assinaturaResponsavel ? true : false;
+      const supOk   = dados?.assinaturaSupervisor  ? true : false;
+
+      cards += `<div class="setor-card" onclick="abrirDetalhe('${s}','${t}','${dataSel}')">
+        <div class="setor-card-emoji">${cfg.emoji}</div>
+        <div class="setor-card-nome">${cfg.nome}<br><span style="font-size:.7rem;color:var(--muted)">${t}</span></div>
+        <div class="setor-card-bar"><div class="setor-card-fill" style="width:${pct}%"></div></div>
+        <div class="setor-card-pct">${feito}/${total} itens (${pct}%)</div>
+        <span class="sig-badge ${respOk?'sig-ok':'sig-pending'}">${respOk?'✓ Responsável assinado':'Aguardando responsável'}</span>
+        <span class="sig-badge ${supOk?'sig-ok':'sig-pending'}">${supOk?'✓ Supervisor assinado':'Aguardando supervisor'}</span>
+      </div>`;
+    }
+  }
+  document.getElementById('overview-grid').innerHTML = cards || '<p style="color:var(--muted);padding:20px">Nenhum registro encontrado.</p>';
+};
+
+window.abrirDetalhe = async function(setor, turno, data) {
+  const cfg = SETORES_CONFIG[setor];
+  const docId = gerarDocId(setor, turno, data);
+  state.detalheDocId = docId;
+
+  let dados = null;
+  if (db) {
+    try {
+      const snap = await getDoc(doc(db, 'checklists', docId));
+      if (snap.exists()) dados = snap.data();
+    } catch(e) {}
+  } else {
+    const raw = localStorage.getItem(docId);
+    if (raw) dados = JSON.parse(raw);
+  }
+
+  document.getElementById('detail-title').textContent = `${cfg.emoji} ${cfg.nome} — ${turno}`;
+
+  const itens = cfg[turno] || [];
+  let html = '';
+  for (const item of itens) {
+    const ok = dados?.checks?.[item.id];
+    html += `<div class="detail-item">
+      <div class="detail-dot ${ok?'dot-ok':'dot-no'}"></div>
+      <span>${item.label}</span>
+    </div>`;
+  }
+  if (dados?.obs) html += `<p style="margin-top:12px;font-size:.82rem;color:var(--muted)">Obs: ${dados.obs}</p>`;
+  document.getElementById('detail-body').innerHTML = html;
+
+  // assinatura supervisor
+  const supOk = dados?.assinaturaSupervisor;
+  const supInput = document.getElementById('assin-sup-input');
+  const supBtn   = document.querySelector('#assin-sup-wrap .btn-primary');
+  const supOkEl  = document.getElementById('assin-sup-ok');
+  if (supOk) {
+    supInput.style.display = 'none';
+    supBtn.style.display   = 'none';
+    supOkEl.textContent    = `✓ Supervisor: ${supOk}`;
+    supOkEl.style.display  = 'block';
+  } else {
+    supInput.style.display = 'block';
+    supBtn.style.display   = 'block';
+    supOkEl.style.display  = 'none';
+    supInput.value         = '';
+    supInput.disabled      = false;
+  }
+
+  document.getElementById('overview-main').style.display   = 'none';
+  document.getElementById('overview-detail').style.display = 'block';
+};
+
+window.fecharDetalhe = function() {
+  document.getElementById('overview-main').style.display   = 'block';
+  document.getElementById('overview-detail').style.display = 'none';
+};
+
+window.assinarSupervisor = async function() {
+  const nome = document.getElementById('assin-sup-input').value.trim();
+  if (!nome) { alert('Digite seu nome completo.'); return; }
+
+  const payload = {
+    assinaturaSupervisor: nome,
+    assinadoPorSupervisorEm: new Date().toISOString(),
+  };
+
+  if (db) {
+    try { await setDoc(doc(db, 'checklists', state.detalheDocId), payload, { merge: true }); } catch(e) {}
+  } else {
+    const prev = JSON.parse(localStorage.getItem(state.detalheDocId) || '{}');
+    localStorage.setItem(state.detalheDocId, JSON.stringify({...prev, ...payload}));
+  }
+
+  document.getElementById('assin-sup-input').style.display = 'none';
+  document.querySelector('#assin-sup-wrap .btn-primary').style.display = 'none';
+  const ok = document.getElementById('assin-sup-ok');
+  ok.textContent = `✓ Supervisor: ${nome} — ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+  ok.style.display = 'block';
+};
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
+(function init() {
+  document.getElementById('view-login').style.display = 'flex';
+  document.getElementById('app').style.display        = 'none';
+})();
+
+</script>
 </body>
 </html>
