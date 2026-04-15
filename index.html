@@ -654,6 +654,7 @@ select.field-input option {
         <option value="bar">🍸 Bar</option>
         <option value="barback">🧊 Bar Back</option>
         <option value="salao">🏮 Salão</option>
+        <option value="caixa">🖥️ Caixa</option>
         <option value="lavacao">🧼 Lavação</option>
       </select>
     </div>
@@ -946,6 +947,36 @@ const SETORES = {
     ],
   },
 
+
+  caixa: {
+    nome: 'Caixa',
+    emoji: '🖥️',
+    tempos: true,
+    abertura: [
+      { id: 'cx_a1', label: 'Verificar embalagens do delivery', desc: 'Conferir estoque de caixas, sacos, lacres e embalagens térmicas. Solicitar reposição se abaixo do mínimo.' },
+      { id: 'cx_a2', label: 'Conferir itens disponíveis e indisponíveis no XMenu', desc: 'Atualizar disponibilidade de itens conforme estoque atual da cozinha e bar.' },
+      { id: 'cx_a3', label: 'Conferir itens disponíveis e indisponíveis no iFood', desc: 'Verificar cardápio e pausar itens sem estoque. Confirmar horário de funcionamento da loja.' },
+      { id: 'cx_a4', label: 'Conferir itens disponíveis e indisponíveis no DGuests', desc: 'Atualizar disponibilidade conforme estoque. Verificar se cardápio digital está correto.' },
+      { id: 'cx_a5', label: 'Conferir itens disponíveis e indisponíveis no Brendi', desc: 'Atualizar disponibilidade e confirmar integração ativa.' },
+      { id: 'cx_a6', label: 'Verificar saldo RYD e anotar', desc: 'Acessar app RYD, verificar saldo disponível para chamar entregador e registrar no campo abaixo.' },
+      { id: 'cx_a7', label: 'Verificar saldo Lets Delivery e anotar', desc: 'Acessar plataforma Lets Delivery, verificar saldo e registrar no campo abaixo.' },
+      { id: 'cx_a8', label: 'Organizar espaço de trabalho do caixa', desc: 'Mesa limpa e organizada, gaveta em ordem, sem itens desnecessários sobre o balcão.' },
+      { id: 'cx_a9', label: 'Colocar máquinas de cartão para carregar', desc: 'Todas as maquininhas conectadas ao carregador antes do serviço. Verificar nível de bateria.' },
+      { id: 'cx_a10', label: 'Verificar troco disponível', desc: 'Conferir fundo de caixa e troco em espécie. Solicitar reforço ao gestor se necessário.' },
+      { id: 'cx_a11', label: 'Testar impressora de pedidos', desc: 'Imprimir teste para confirmar que bobina está carregada e impressora funcionando.' },
+      { id: 'cx_a12', label: 'Conferir conexão com internet', desc: 'Wi-Fi estável antes da abertura. Reiniciar roteador se necessário e alertar gestor.' },
+      { id: 'cx_a13', label: 'Verificar sistema de comanda (XMenu)', desc: 'Login efetuado, tablets das mesas funcionando e sincronizados.' },
+    ],
+    fechamento: [
+      { id: 'cx_f1', label: 'Fechar loja no iFood', desc: 'Pausar loja ou confirmar encerramento do horário de funcionamento no aplicativo.' },
+      { id: 'cx_f2', label: 'Fechar loja no Brendi', desc: 'Encerrar recebimento de pedidos na plataforma.' },
+      { id: 'cx_f3', label: 'Conferir e fechar todas as comandas abertas', desc: 'Nenhuma comanda deve ficar em aberto ao final do serviço.' },
+      { id: 'cx_f4', label: 'Realizar fechamento do caixa', desc: 'Conferir totais de dinheiro, cartão e PIX. Registrar sangria se necessário.' },
+      { id: 'cx_f5', label: 'Guardar máquinas de cartão', desc: 'Desligar ou guardar em local seguro. Verificar carregamento.' },
+      { id: 'cx_f6', label: 'Enviar relatório de fechamento para gestão', desc: 'Total de vendas, formas de pagamento e ocorrências do dia.' },
+      { id: 'cx_f7', label: 'Organizar e limpar espaço do caixa', desc: 'Mesa limpa, equipamentos organizados e desligados conforme protocolo.' },
+    ],
+  },
   lavacao: {
     nome: 'Lavação',
     emoji: '🧼',
@@ -1259,6 +1290,15 @@ function renderChecklist() {
     html += `</div>`;
   }
 
+
+  // Saldos de entregadores (caixa)
+  if (currentSector === 'caixa') {
+    html += `<div class="temp-block"><h4>💰 Saldos — Aplicativos de Entrega</h4><div class="temp-grid">
+      <div class="temp-item"><label>Saldo RYD (R$)</label><input class="temp-input" type="text" value="${(sd.saldos && sd.saldos.ryd) || ''}" placeholder="Ex: R$ 45,00" onchange="saveField('${currentSector}/saldos/ryd', this.value)"></div>
+      <div class="temp-item"><label>Saldo Lets Delivery (R$)</label><input class="temp-input" type="text" value="${(sd.saldos && sd.saldos.lets) || ''}" placeholder="Ex: R$ 120,00" onchange="saveField('${currentSector}/saldos/lets', this.value)"></div>
+    </div></div>`;
+  }
+
   // Quebras (lavação)
   if (s.quebras) {
     html += `
@@ -1333,6 +1373,29 @@ function renderChecklist() {
           <label>Fechamento finalizado às</label>
           <div class="finish-time-val">${sd.horario_fechamento_fim || '—'}</div>
           <button onclick="markFinishTime('fechamento')" style="margin-top:6px;font-size:0.72rem;background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:5px;cursor:pointer">Marcar agora</button>
+        </div>
+      </div>
+      ${['cozinha','pizzaria','bar'].includes(currentSector) ? `
+      <div class="temp-block" style="margin-bottom:14px;border:none;padding:0">
+        <h4 style="margin-bottom:8px">📋 PA — Produções do Dia</h4>
+        <textarea class="obs-final" style="min-height:75px;margin-bottom:0" placeholder="Ex: 2kg molho pomodoro, 20 bolas pizza, cordial morango 500ml..." onchange="saveField('${currentSector}/pa_producoes', this.value)">${sd.pa_producoes || ''}</textarea>
+      </div>` : ''}
+      ${currentSector === 'lavacao' ? `
+      <div class="temp-block" style="margin-bottom:14px;border:none;padding:0">
+        <h4 style="margin-bottom:8px">🔴 Copos Quebrados no Expediente</h4>
+        <div class="temp-grid">
+          <div class="temp-item"><label>Taças / Copos (qtd)</label><input class="temp-input" type="text" value="${(sd.quebras_exp && sd.quebras_exp.copos) || ''}" placeholder="Ex: 2 taças vinho" onchange="saveField('${currentSector}/quebras_exp/copos', this.value)"></div>
+          <div class="temp-item"><label>Pratos / Outros (qtd)</label><input class="temp-input" type="text" value="${(sd.quebras_exp && sd.quebras_exp.outros) || ''}" placeholder="Ex: 1 prato raso" onchange="saveField('${currentSector}/quebras_exp/outros', this.value)"></div>
+        </div>
+      </div>` : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div>
+          <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--red);margin-bottom:6px;font-weight:600">🔧 Manutenções Necessárias</div>
+          <textarea class="obs-final" style="min-height:75px;margin-bottom:0;border-color:rgba(176,58,53,0.3)" placeholder="Ex: lâmpada queimada na entrada, freezer não degela, gaveta do caixa emperrando..." onchange="saveField('${currentSector}/manutencoes', this.value)">${sd.manutencoes || ''}</textarea>
+        </div>
+        <div>
+          <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--orange);margin-bottom:6px;font-weight:600">🛒 Lista de Compras</div>
+          <textarea class="obs-final" style="min-height:75px;margin-bottom:0;border-color:rgba(184,106,42,0.3)" placeholder="Ex: bobina impressora, papel toalha, álcool 70%, canudos..." onchange="saveField('${currentSector}/lista_compras', this.value)">${sd.lista_compras || ''}</textarea>
         </div>
       </div>
       <textarea class="obs-final" placeholder="Observações gerais do setor..." onchange="saveField('${currentSector}/observacoes', this.value)">${sd.observacoes || ''}</textarea>
