@@ -652,7 +652,6 @@ select.field-input option {
         <option value="cozinha">🍳 Cozinha</option>
         <option value="pizzaria">🍕 Pizzaria</option>
         <option value="bar">🍸 Bar</option>
-        <option value="barback">🧊 Bar Back</option>
         <option value="salao">🏮 Salão</option>
         <option value="caixa">🖥️ Caixa</option>
         <option value="lavacao">🧼 Lavação</option>
@@ -827,7 +826,7 @@ const SETORES = {
   },
 
   bar: {
-    nome: 'Bar',
+    nome: 'Bar de Drinks',
     emoji: '🍸',
     tempos: true,
     producoes: {
@@ -853,6 +852,11 @@ const SETORES = {
       { id: 'bar_a9', label: 'Guarnições posicionadas', desc: 'Todas as guarnições do dia preparadas e no lugar da praça.' },
       { id: 'bar_a10', label: 'CO2 ligado', desc: 'Verificar pressão do cilindro. Registrar leitura do manômetro.' },
       { id: 'bar_a11', label: 'Conferir pressão dos carbonatados', desc: 'Cada linha de carbonatado na pressão correta. Testar um de cada antes de abrir.' },
+      { id: 'bar_a12', label: 'Verificar temperatura dos freezers e geladeiras', desc: 'Anotar leituras. Geladeira: 1–4°C. Freezer: -18°C ou abaixo. Alertar gestão se fora da faixa.' },
+      { id: 'bar_a13', label: 'Preparar suco de laranja e limão espremido', desc: 'Quantidade conforme previsão do dia. Reservar em recipiente tampado na geladeira.' },
+      { id: 'bar_a14', label: 'Cortar e reservar frutas para o serviço', desc: 'Laranja, limão, morango, abacaxi — cortar, tampar e guardar na geladeira até o serviço.' },
+      { id: 'bar_a15', label: 'Buscar destilados no estoque', desc: 'Separar o que vai para a praça conforme lista de mise en place.' },
+      { id: 'bar_a16', label: 'Conferir vinhos e cervejas especiais', desc: 'Verificar estoque, temperatura e organização.' },
     ],
     fechamento: [
       { id: 'bar_f1', label: 'Repor destilados e copos', desc: 'Deixar estoque reposto para o próximo serviço.' },
@@ -868,49 +872,13 @@ const SETORES = {
       { id: 'bar_f11', label: 'CO2 desligado', desc: 'Fechar o cilindro e desligar o regulador.' },
       { id: 'bar_f12', label: 'Enviar documentos de controle no grupo', desc: 'Checklist preenchido e foto enviada no grupo da gestão.' },
       { id: 'bar_f13', label: 'Lavar bancada e balcão com bucha', desc: 'Detergente, enxágue e álcool 70% para finalizar.' },
+      { id: 'bar_f14', label: 'Repor refrigerantes, energéticos e águas', desc: 'Geladeiras abastecidas e organizadas para o próximo serviço.' },
+      { id: 'bar_f15', label: 'Lavar e secar baldes de gelo', desc: 'Lavar todos os baldes utilizados. Secar e guardar no local correto.' },
+      { id: 'bar_f16', label: 'Lavar tábuas de corte e utensílios de preparo', desc: 'Lavar individualmente. Guardar limpos e secos.' },
+      { id: 'bar_f17', label: 'Embalar e guardar frutas sobradas', desc: 'Frutas em embalagem fechada, identificadas com data na geladeira.' },
     ],
   },
 
-  barback: {
-    nome: 'Bar Back',
-    emoji: '🧊',
-    tempos: true,
-    producoes: {
-      titulo: 'Guarnições & Produções (Bar Back)',
-      itens: [
-        { grupo: 'Guarnições', lista: ['Laranja','Limão','Morango','Abacaxi'] },
-        { grupo: 'Sucos', lista: ['Suco de Laranja','Limão Espremido'] },
-      ],
-    },
-    abertura: [
-      { id: 'bb_a1', label: 'Abastecer canudos e descartáveis', desc: 'Canudos, guardanapos e descartáveis nos organizadores corretos.' },
-      { id: 'bb_a2', label: 'Abastecer coolers de gelo', desc: 'Carregar gelo nos coolers antes da abertura.' },
-      { id: 'bb_a3', label: 'Verificar temperatura dos freezers', desc: 'Anotar leituras. Geladeira: 1–4°C. Freezer: -18°C ou abaixo.' },
-      { id: 'bb_a4', label: 'Verificar baldes e limpar', desc: 'Baldes de gelo limpos, sem resíduos ou odor.' },
-      { id: 'bb_a5', label: 'Balcão limpo e sanitizado com álcool', desc: 'Álcool 70% em toda a área de trabalho.' },
-      { id: 'bb_a6', label: 'Conferir vinhos e cervejas especiais', desc: 'Verificar estoque, temperatura e organização.' },
-      { id: 'bb_a7', label: 'Preparar suco de laranja', desc: 'Quantidade conforme previsão do dia.' },
-      { id: 'bb_a8', label: 'Espremer uma garrafa de limão', desc: 'Limão espremido e reservado em recipiente tampado na geladeira.' },
-      { id: 'bb_a9', label: 'Cortar limões', desc: 'Cortar e reservar em recipiente tampado para o serviço.' },
-      { id: 'bb_a10', label: 'Buscar destilados no estoque', desc: 'Separar o que vai para a praça do bar conforme lista de mise en place.' },
-      { id: 'bb_a11', label: 'Comandeira ligada', desc: 'Verificar funcionamento antes da abertura.' },
-      { id: 'bb_a12', label: 'Copos posicionados', desc: 'Copos limpos e organizados por tipo na posição correta.' },
-      { id: 'bb_a13', label: 'Equipe uniformizada', desc: 'Todos com uniforme completo antes da abertura.' },
-    ],
-    fechamento: [
-      { id: 'bb_f1', label: 'Guardar destilados não vendidos', desc: 'Retornar para o estoque, registrando o que foi devolvido.' },
-      { id: 'bb_f2', label: 'Repor cervejas', desc: 'Deixar geladeira abastecida para o próximo serviço.' },
-      { id: 'bb_f3', label: 'Embalar frutas sobradas', desc: 'Frutas em embalagem fechada, identificadas com data, na geladeira.' },
-      { id: 'bb_f4', label: 'Repor refrigerantes, energéticos e águas', desc: 'Geladeiras abastecidas e organizadas.' },
-      { id: 'bb_f5', label: 'Lavar chão do bar e cantos da parede', desc: 'Varrer, lavar, rodo. Focar nos cantos.' },
-      { id: 'bb_f6', label: 'Lavar tábuas e utensílios', desc: 'Lavar individualmente. Guardar limpos e secos.' },
-      { id: 'bb_f7', label: 'Limpar porta das geladeiras', desc: 'Limpeza interna e externa, verificar vedação.' },
-      { id: 'bb_f8', label: 'Descartar gelo', desc: 'Todo gelo dos coolers deve ser descartado. Nunca reutilizar.' },
-      { id: 'bb_f9', label: 'Lavar baldes utilizados', desc: 'Lavar e secar todos os baldes de gelo.' },
-      { id: 'bb_f10', label: 'Enviar documentos de controle no grupo', desc: 'Checklist e foto enviados no grupo da gestão.' },
-      { id: 'bb_f11', label: 'Lavar bancada e balcão com bucha', desc: 'Detergente + enxágue + álcool 70%.' },
-    ],
-  },
 
   salao: {
     nome: 'Salão',
@@ -930,6 +898,9 @@ const SETORES = {
       { id: 'sal_a11', label: 'Verificar itens fora de lugar no salão', desc: 'Remover pés de ombrelone, rodos, vassouras e cones do campo visual dos clientes.' },
       { id: 'sal_a12', label: 'Todos uniformizados no horário de abertura', desc: 'Equipe pronta e posicionada antes de abrir as portas.' },
       { id: 'sal_a13', label: 'Passar informações para freelancers', desc: 'Briefing de posicionamento, reservas e orientações do dia para os freelancers antes de abrir.' },
+      { id: 'sal_a14', label: 'Ligar todas as TVs', desc: 'Ligar todas as TVs do salão e verificar se estão na entrada/fonte correta e com conteúdo adequado.' },
+      { id: 'sal_a15', label: 'Retirar cones da entrada do bar', desc: 'Remover todos os cones de delimitação da entrada e guardar no local correto.' },
+      { id: 'sal_a16', label: 'Conferir itens em locais indevidos', desc: 'Verificar tapetes desalinhados, pufes fora do lugar, cadeiras viradas, objetos esquecidos no salão. Tudo no lugar antes de abrir.' },
     ],
     fechamento: [
       { id: 'sal_f1', label: 'Recolher taças, copos e pratos das mesas', desc: 'Verificar todas as mesas, mezanino, lounge e área externa.' },
@@ -944,6 +915,9 @@ const SETORES = {
       { id: 'sal_f10', label: 'Dobrar mesas, cadeiras e cobrir', desc: 'Cobrir mobiliário para proteção.' },
       { id: 'sal_f11', label: 'Trancar portas e grades', desc: 'Verificar todas as entradas. Sem exceção.' },
       { id: 'sal_f12', label: 'Ativar alarme', desc: 'Ativar o sistema de alarme somente após confirmar que todos saíram do local.' },
+      { id: 'sal_f13', label: 'Cobrir todas as TVs', desc: 'Desligar e cobrir cada TV com a capa protetora correta.' },
+      { id: 'sal_f14', label: 'Cobrir todas as caixas de som', desc: 'Todas as caixas do salão e palco cobertas com capas protetoras após desligar.' },
+      { id: 'sal_f15', label: 'Cobrir a medusa do palco', desc: 'Cobrir o microfone/medusa do palco com a proteção correta.' },
     ],
   },
 
@@ -1277,7 +1251,7 @@ function renderChecklist() {
     }
   }
 
-  // Produções (bar / barback)
+  // Produções (bar)
   if (s.producoes) {
     html += `<div class="prod-table"><div class="prod-table-header"><span>${s.producoes.titulo}</span><span style="text-align:center">Qtd.</span></div>`;
     s.producoes.itens.forEach(grupo => {
