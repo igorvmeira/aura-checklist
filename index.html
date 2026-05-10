@@ -1415,28 +1415,37 @@ function renderItem(item, c, isSupervisor) {
 function toggleCheck(itemId) {
   if (USER.role === 'gestor') return;
 
-  // Feedback visual imediato
-  const ci = document.getElementById('ci-' + itemId);
-  const isNowChecked = ci && !ci.classList.contains('checked');
-  if (ci) ci.classList.toggle('checked', isNowChecked);
-
-  // Atualiza liveData local para barra de progresso
+  // Ler estado atual do liveData (fonte de verdade)
   if (!liveData[currentSector]) liveData[currentSector] = {};
   if (!liveData[currentSector].checks) liveData[currentSector].checks = {};
   if (!liveData[currentSector].checks[itemId]) liveData[currentSector].checks[itemId] = {};
+  const currentDone = liveData[currentSector].checks[itemId].done || false;
+  const isNowChecked = !currentDone;
+
+  // Atualiza liveData local imediatamente
   liveData[currentSector].checks[itemId].done = isNowChecked;
+
+  // Feedback visual imediato sem re-render completo
+  const ci = document.getElementById('ci-' + itemId);
+  if (ci) ci.classList.toggle('checked', isNowChecked);
   updateTabDots();
 
   // Persiste no Firebase
   if (db) {
-    getRef(`${currentSector}/checks/${itemId}`).update({
+    getRef(currentSector + '/checks/' + itemId).update({
       done: isNowChecked,
       done_by: isNowChecked ? USER.name : null,
       done_at: isNowChecked ? getTimeStr() : null,
-    }).catch(() => {
-      if (ci) ci.classList.toggle('checked', !isNowChecked);
+    }).catch(function(err) {
+      console.error('Firebase error:', err);
+      // Reverte liveData e visual em caso de erro
+      liveData[currentSector].checks[itemId].done = currentDone;
+      const ci2 = document.getElementById('ci-' + itemId);
+      if (ci2) ci2.classList.toggle('checked', currentDone);
       showToast('Erro ao salvar. Verifique a conexão.');
     });
+  } else {
+    showToast('Sem conexão com Firebase');
   }
 }
 
@@ -1658,7 +1667,16 @@ function resetDay() {
 // REFRESH
 // ══════════════════════════════════════════════════════════
 function refreshUI() {
-  if (currentView === 'checklist') renderChecklist();
+  if (currentView === 'checklist') {
+    // Só re-renderiza checklist completo se nenhum input estiver com foco
+    // para não interromper digitação do usuário
+    const activeTag = document.activeElement && document.activeElement.tagName;
+    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') {
+      updateTabDots();
+    } else {
+      renderChecklist();
+    }
+  }
   if (currentView === 'overview') renderOverview();
   updateTabDots();
 }
