@@ -1413,16 +1413,31 @@ function renderItem(item, c, isSupervisor) {
 // ACTIONS
 // ══════════════════════════════════════════════════════════
 function toggleCheck(itemId) {
-  if (USER.role === 'gestor') return; // gestor só visualiza
-  const sd = liveData[currentSector] || {};
-  const checks = sd.checks || {};
-  const current = checks[itemId] || {};
-  const newVal = !current.done;
-  getRef(`${currentSector}/checks/${itemId}`).update({
-    done: newVal,
-    done_by: newVal ? USER.name : null,
-    done_at: newVal ? getTimeStr() : null,
-  });
+  if (USER.role === 'gestor') return;
+
+  // Feedback visual imediato
+  const ci = document.getElementById('ci-' + itemId);
+  const isNowChecked = ci && !ci.classList.contains('checked');
+  if (ci) ci.classList.toggle('checked', isNowChecked);
+
+  // Atualiza liveData local para barra de progresso
+  if (!liveData[currentSector]) liveData[currentSector] = {};
+  if (!liveData[currentSector].checks) liveData[currentSector].checks = {};
+  if (!liveData[currentSector].checks[itemId]) liveData[currentSector].checks[itemId] = {};
+  liveData[currentSector].checks[itemId].done = isNowChecked;
+  updateTabDots();
+
+  // Persiste no Firebase
+  if (db) {
+    getRef(`${currentSector}/checks/${itemId}`).update({
+      done: isNowChecked,
+      done_by: isNowChecked ? USER.name : null,
+      done_at: isNowChecked ? getTimeStr() : null,
+    }).catch(() => {
+      if (ci) ci.classList.toggle('checked', !isNowChecked);
+      showToast('Erro ao salvar. Verifique a conexão.');
+    });
+  }
 }
 
 function toggleSvCheck(itemId) {
