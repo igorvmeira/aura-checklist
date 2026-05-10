@@ -1126,11 +1126,14 @@ function launchApp() {
 // ══════════════════════════════════════════════════════════
 // FIREBASE SUBSCRIPTION
 // ══════════════════════════════════════════════════════════
+let _pendingWrites = 0; // contador de escritas em andamento
+
 function subscribeAll() {
   const ref = db.ref(`checklist/${today}`);
   ref.on('value', snap => {
     liveData = snap.val() || {};
-    refreshUI();
+    // Só re-renderiza se não houver escritas locais pendentes
+    if (_pendingWrites === 0) refreshUI();
   });
 }
 
@@ -1415,7 +1418,7 @@ function renderItem(item, c, isSupervisor) {
 function toggleCheck(itemId) {
   if (USER.role === 'gestor') return;
 
-  // Ler estado atual do liveData (fonte de verdade)
+  // Ler estado atual
   if (!liveData[currentSector]) liveData[currentSector] = {};
   if (!liveData[currentSector].checks) liveData[currentSector].checks = {};
   if (!liveData[currentSector].checks[itemId]) liveData[currentSector].checks[itemId] = {};
@@ -1425,28 +1428,30 @@ function toggleCheck(itemId) {
   // Atualiza liveData local imediatamente
   liveData[currentSector].checks[itemId].done = isNowChecked;
 
-  // Feedback visual imediato sem re-render completo
+  // Feedback visual imediato
   const ci = document.getElementById('ci-' + itemId);
   if (ci) ci.classList.toggle('checked', isNowChecked);
   updateTabDots();
 
-  // Persiste no Firebase
-  if (db) {
-    getRef(currentSector + '/checks/' + itemId).update({
-      done: isNowChecked,
-      done_by: isNowChecked ? USER.name : null,
-      done_at: isNowChecked ? getTimeStr() : null,
-    }).catch(function(err) {
-      console.error('Firebase error:', err);
-      // Reverte liveData e visual em caso de erro
-      liveData[currentSector].checks[itemId].done = currentDone;
-      const ci2 = document.getElementById('ci-' + itemId);
-      if (ci2) ci2.classList.toggle('checked', currentDone);
-      showToast('Erro ao salvar. Verifique a conexão.');
-    });
-  } else {
-    showToast('Sem conexão com Firebase');
-  }
+  if (!db) { showToast('Sem conexão com Firebase'); return; }
+
+  // Bloquear re-render do listener enquanto salva
+  _pendingWrites++;
+  getRef(currentSector + '/checks/' + itemId).update({
+    done: isNowChecked,
+    done_by: isNowChecked ? USER.name : null,
+    done_at: isNowChecked ? getTimeStr() : null,
+  }).then(function() {
+    _pendingWrites = Math.max(0, _pendingWrites - 1);
+  }).catch(function(err) {
+    _pendingWrites = Math.max(0, _pendingWrites - 1);
+    console.error('Firebase error:', err);
+    // Reverte
+    liveData[currentSector].checks[itemId].done = currentDone;
+    const ci2 = document.getElementById('ci-' + itemId);
+    if (ci2) ci2.classList.toggle('checked', currentDone);
+    showToast('Erro ao salvar. Verifique a conexão.');
+  });
 }
 
 function toggleSvCheck(itemId) {
@@ -1479,7 +1484,13 @@ function markFinishTime(type) {
 }
 
 function saveField(path, value) {
-  getRef(path).set(value);
+  if (!db) return;
+  _pendingWrites++;
+  getRef(path).set(value).then(function() {
+    _pendingWrites = Math.max(0, _pendingWrites - 1);
+  }).catch(function() {
+    _pendingWrites = Math.max(0, _pendingWrites - 1);
+  });
 }
 
 function toggleObsInput(id) {
